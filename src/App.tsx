@@ -5,6 +5,7 @@ import { clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { SONG_DATABASE } from "./songs";
 import type { Song } from "./songs";
+import { Heart } from "lucide-react";
 
 // --- CONFIGURATION ---
 const BROKER_URL = "wss://broker.emqx.io:8084/mqtt";
@@ -168,11 +169,12 @@ const AdminPanel = ({
 };
 
 // --- AUDIENCE VIEW (Scrollable, Full Lyrics) ---
+// --- AUDIENCE VIEW (Fixed Background + Scrollable Content) ---
 const AudienceView = ({ song }: { song: Song | null }) => {
   return (
     <AnimatePresence mode="wait">
       {!song ? (
-        // IDLE STATE (Waiting for band)
+        // IDLE STATE
         <motion.div
           key="idle"
           initial={{ opacity: 0 }}
@@ -193,54 +195,62 @@ const AudienceView = ({ song }: { song: Song | null }) => {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.8 }}
+          // 1. OUTER CONTAINER: Fixed height, NO SCROLL. Holds the background.
           className={cn(
-            "h-screen w-full overflow-y-auto relative transition-colors duration-[1500ms] ease-in-out bg-gradient-to-br",
+            "h-screen w-full relative overflow-hidden bg-gradient-to-br",
             song.color
           )}
         >
-          {/* Background Texture */}
-          <div className="fixed inset-0 bg-black/30 pointer-events-none" />
-          <div className="fixed inset-0 opacity-10 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] pointer-events-none" />
+          {/* Static Background Effects */}
+          <div className="absolute inset-0 bg-black/30 pointer-events-none z-0" />
+          <div className="absolute inset-0 opacity-10 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] pointer-events-none z-0" />
 
-          <div className="relative z-10 min-h-full p-6 pb-32 md:p-12 md:pb-48 flex flex-col">
-            {/* Song Header (Sticky-ish) */}
-            <motion.div
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.2 }}
-              className="mb-12 mt-4"
-            >
-              <h1 className="text-white text-4xl md:text-6xl font-black tracking-tight leading-none mb-2 drop-shadow-xl">
-                {song.title}
-              </h1>
-              {/* <p className="text-white/60 text-xl md:text-2xl font-medium">
-                {song.artist}
-              </p> */}
-            </motion.div>
+          {/* 2. INNER SCROLLER: Handles the scrolling independently */}
+          <div className="relative z-10 h-full w-full overflow-y-auto no-scrollbar">
+            <div className="min-h-full p-6 pb-28 md:p-12 md:pb-48 flex flex-col">
+              {/* Song Header */}
+              <motion.div
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.2 }}
+                className="mb-12 mt-4"
+              >
+                <h1 className="text-white text-4xl md:text-6xl font-black tracking-tight leading-none mb-2 drop-shadow-sm">
+                  {song.title}
+                </h1>
+              </motion.div>
 
-            {/* Full Lyrics Sheet */}
-            <div className="space-y-6 md:space-y-8 max-w-2xl">
-              {song.lyrics.map((line, i) => (
-                <motion.p
-                  key={i}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{
-                    delay: 0.3 + i * 0.05, // Stagger effect
-                    duration: 0.5,
-                  }}
-                  className="text-white/90 text-2xl md:text-4xl font-bold leading-tight drop-shadow-md"
-                >
-                  {line}
-                </motion.p>
-              ))}
+              {/* Lyrics */}
+              <div className="space-y-6 md:space-y-8 max-w-2xl">
+                {song.lyrics.map((line, i) => (
+                  <motion.p
+                    key={i}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{
+                      delay: 0.3 + i * 0.05,
+                      duration: 0.5,
+                    }}
+                    className="text-white/90 text-2xl md:text-4xl font-bold leading-tight drop-shadow-md"
+                  >
+                    {line}
+                  </motion.p>
+                ))}
+              </div>
+
+              {/* End Marker */}
+              {/* <div className="mt-12 flex justify-center opacity-30">
+                <div className="w-2 h-2 bg-white rounded-full mx-1" />
+                <div className="w-2 h-2 bg-white rounded-full mx-1" />
+                <div className="w-2 h-2 bg-white rounded-full mx-1" />
+              </div> */}
             </div>
-
-            {/* Footer / End Marker */}
-            <div className="mt-12 flex justify-center opacity-30">
-              <div className="w-2 h-2 bg-white rounded-full mx-1" />
-              <div className="w-2 h-2 bg-white rounded-full mx-1" />
-              <div className="w-2 h-2 bg-white rounded-full mx-1" />
+            <div className="text-center flex-col justify-center">
+              <p>@ SRKR LOLO</p>
+              <a href="https://www.linkedin.com/in/lenka-lokesh/">
+                {" "}
+                <p className="mb-5 inline-block">Developed by Lokesh</p>
+              </a>
             </div>
           </div>
         </motion.div>
