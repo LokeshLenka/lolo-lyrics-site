@@ -1,11 +1,10 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import mqtt from "mqtt";
 import { motion, AnimatePresence } from "framer-motion";
 import { clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { SONG_DATABASE } from "./songs";
 import type { Song } from "./songs";
-import { Heart } from "lucide-react";
 
 // --- CONFIGURATION ---
 const BROKER_URL = "wss://broker.emqx.io:8084/mqtt";
