@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import mqtt from "mqtt";
 import { motion, AnimatePresence } from "framer-motion";
 import { clsx } from "clsx";
@@ -8,23 +8,25 @@ import type { Song } from "./songs";
 
 // --- CONFIGURATION ---
 const BROKER_URL = "wss://broker.emqx.io:8084/mqtt";
-// Keep your unique ID!
 const MQTT_TOPIC = "concert/live/unique-id-998877";
+const ADMIN_PIN = "12345"; // <--- CHANGE THIS TO YOUR SECRET PIN
 
 function cn(...inputs: (string | undefined | null | false)[]) {
   return twMerge(clsx(inputs));
 }
 
 export default function App() {
-  const [isAdmin, setIsAdmin] = useState(false);
+  const [isAdminRoute, setIsAdminRoute] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false); // Track login status
+  const [pinInput, setPinInput] = useState("");
   const [activeSongId, setActiveSongId] = useState<string | null>(null);
   const [client, setClient] = useState<mqtt.MqttClient | null>(null);
   const [status, setStatus] = useState("Connecting...");
 
   useEffect(() => {
-    // 1. Detect Admin
+    // 1. Detect Admin Route
     const isUrlAdmin = window.location.pathname.includes("/admin");
-    setIsAdmin(isUrlAdmin);
+    setIsAdminRoute(isUrlAdmin);
 
     // 2. Connect to Broker
     console.log(`Connecting to ${BROKER_URL}...`);
@@ -32,14 +34,12 @@ export default function App() {
 
     mqttClient.on("connect", () => {
       setStatus("Connected");
-      // Subscribe to listen for updates (even Admin listens to confirm receipt)
       mqttClient.subscribe(MQTT_TOPIC);
     });
 
     mqttClient.on("message", (topic, message) => {
       if (topic === MQTT_TOPIC) {
         const payload = JSON.parse(message.toString());
-        console.log("New Song:", payload.songId);
         setActiveSongId(payload.songId);
       }
     });
@@ -50,11 +50,18 @@ export default function App() {
     };
   }, []);
 
-  // 3. Admin Broadcast (Only sends Song ID now)
-  const setSong = (songId: string | null) => {
-    // Optimistic update
-    setActiveSongId(songId);
+  const handlePinSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (pinInput === ADMIN_PIN) {
+      setIsAuthenticated(true);
+    } else {
+      alert("Wrong PIN!");
+      setPinInput("");
+    }
+  };
 
+  const setSong = (songId: string | null) => {
+    setActiveSongId(songId);
     if (client && client.connected) {
       const payload = JSON.stringify({ songId });
       client.publish(MQTT_TOPIC, payload, { retain: true, qos: 0 });
@@ -63,15 +70,51 @@ export default function App() {
 
   const activeSong = SONG_DATABASE.find((s) => s.id === activeSongId) || null;
 
-  return isAdmin ? (
+  // --- RENDER LOGIC ---
+
+  // 1. If not admin route -> Show Audience View
+  if (!isAdminRoute) {
+    return <AudienceView song={activeSong} />;
+  }
+
+  // 2. If admin route but not authenticated -> Show PIN Screen
+  if (!isAuthenticated) {
+    return (
+      <div className="h-screen bg-black text-white flex flex-col items-center justify-center p-4">
+        <h2 className="text-xl font-bold mb-4 tracking-widest uppercase text-zinc-500">
+          Admin Access
+        </h2>
+        <form
+          onSubmit={handlePinSubmit}
+          className="flex flex-col gap-4 w-full max-w-xs"
+        >
+          <input
+            type="password"
+            maxLength={5}
+            value={pinInput}
+            onChange={(e) => setPinInput(e.target.value)}
+            placeholder="Enter 5-digit PIN"
+            className="bg-zinc-900 border border-zinc-700 rounded-lg p-4 text-center text-2xl tracking-[0.5em] outline-none focus:border-blue-500 transition-colors"
+          />
+          <button
+            type="submit"
+            className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg transition-colors"
+          >
+            UNLOCK
+          </button>
+        </form>
+      </div>
+    );
+  }
+
+  // 3. If authenticated -> Show Admin Panel
+  return (
     <AdminPanel
       songs={SONG_DATABASE}
       activeSongId={activeSongId}
       status={status}
       onSelectSong={setSong}
     />
-  ) : (
-    <AudienceView song={activeSong} />
   );
 }
 
