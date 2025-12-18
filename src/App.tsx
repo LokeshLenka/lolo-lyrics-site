@@ -1,14 +1,15 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import mqtt from "mqtt";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
-import { SONG_DATABASE, type Song } from "./songs";
+import { SONG_DATABASE } from "./songs";
+import type { Song } from "./songs";
 
 // --- CONFIGURATION ---
-// CHANGE THIS TO SOMETHING UNIQUE!
+const BROKER_URL = "wss://broker.emqx.io:8084/mqtt";
+// Keep your unique ID!
 const MQTT_TOPIC = "concert/live/unique-id-998877";
-const BROKER_URL = "wss://broker.hivemq.com:8000/mqtt";
 
 function cn(...inputs: (string | undefined | null | false)[]) {
   return twMerge(clsx(inputs));
@@ -17,47 +18,45 @@ function cn(...inputs: (string | undefined | null | false)[]) {
 export default function App() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [activeSongId, setActiveSongId] = useState<string | null>(null);
-  const [activeLineIndex, setActiveLineIndex] = useState<number>(-1);
   const [client, setClient] = useState<mqtt.MqttClient | null>(null);
   const [status, setStatus] = useState("Connecting...");
 
   useEffect(() => {
-    // 1. Detect Admin Mode via URL (e.g., yoursite.com/admin)
+    // 1. Detect Admin
     const isUrlAdmin = window.location.pathname.includes("/admin");
     setIsAdmin(isUrlAdmin);
 
-    // 2. Connect to Public MQTT Broker
+    // 2. Connect to Broker
+    console.log(`Connecting to ${BROKER_URL}...`);
     const mqttClient = mqtt.connect(BROKER_URL);
 
     mqttClient.on("connect", () => {
       setStatus("Connected");
-      // Both Admin and Audience subscribe so Admin UI stays in sync too
-      mqttClient.subscribe(MQTT_TOPIC, (err) => {
-        if (!err) console.log("Subscribed!");
-      });
+      // Subscribe to listen for updates (even Admin listens to confirm receipt)
+      mqttClient.subscribe(MQTT_TOPIC);
     });
 
-    // 3. Listen for Messages
     mqttClient.on("message", (topic, message) => {
       if (topic === MQTT_TOPIC) {
         const payload = JSON.parse(message.toString());
+        console.log("New Song:", payload.songId);
         setActiveSongId(payload.songId);
-        setActiveLineIndex(payload.lineIndex);
       }
     });
 
     setClient(mqttClient);
-
     return () => {
       mqttClient.end();
     };
   }, []);
 
-  // 4. Admin Broadcast Function
-  const broadcast = (songId: string | null, lineIndex: number) => {
+  // 3. Admin Broadcast (Only sends Song ID now)
+  const setSong = (songId: string | null) => {
+    // Optimistic update
+    setActiveSongId(songId);
+
     if (client && client.connected) {
-      const payload = JSON.stringify({ songId, lineIndex });
-      // Retain: true means new users get the last message immediately upon joining
+      const payload = JSON.stringify({ songId });
       client.publish(MQTT_TOPIC, payload, { retain: true, qos: 0 });
     }
   };
@@ -67,205 +66,185 @@ export default function App() {
   return isAdmin ? (
     <AdminPanel
       songs={SONG_DATABASE}
-      activeSong={activeSong}
-      activeLineIndex={activeLineIndex}
+      activeSongId={activeSongId}
       status={status}
-      onControl={(sId, lIdx) => broadcast(sId, lIdx)}
+      onSelectSong={setSong}
     />
   ) : (
-    <AudienceView song={activeSong} activeLineIndex={activeLineIndex} />
+    <AudienceView song={activeSong} />
   );
 }
 
-// --- SUB-COMPONENT: ADMIN PANEL ---
+// --- ADMIN PANEL (Simplified: Just a Song Selector) ---
 const AdminPanel = ({
   songs,
-  activeSong,
-  activeLineIndex,
+  activeSongId,
   status,
-  onControl,
+  onSelectSong,
 }: {
   songs: Song[];
-  activeSong: Song | null;
-  activeLineIndex: number;
+  activeSongId: string | null;
   status: string;
-  onControl: (sId: string | null, idx: number) => void;
+  onSelectSong: (id: string | null) => void;
 }) => {
   return (
-    <div className="flex flex-col md:flex-row h-screen bg-zinc-900 text-white font-sans overflow-hidden">
-      {/* Setlist Sidebar */}
-      <div className="w-full md:w-80 border-b md:border-b-0 md:border-r border-white/10 flex flex-col bg-black">
-        <div className="p-4 border-b border-white/10 flex justify-between items-center">
-          <h2 className="font-bold tracking-wider text-zinc-500 text-xs uppercase">
-            Setlist
-          </h2>
-          <div className="flex items-center gap-2">
+    <div className="min-h-screen bg-zinc-900 text-white p-6 font-sans">
+      <div className="max-w-md mx-auto space-y-6">
+        {/* Header */}
+        <div className="flex justify-between items-end border-b border-white/10 pb-4">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight">Live Control</h1>
+            <p className="text-zinc-500 text-sm">
+              Tap a song to display lyrics
+            </p>
+          </div>
+          <div className="flex items-center gap-2 text-xs">
             <div
               className={cn(
                 "w-2 h-2 rounded-full",
                 status === "Connected" ? "bg-green-500" : "bg-red-500"
               )}
             />
-            <span className="text-[10px] text-zinc-500">{status}</span>
+            {status}
           </div>
         </div>
-        <div className="flex-1 overflow-y-auto p-2 space-y-1">
+
+        {/* Song Grid */}
+        <div className="space-y-3">
           {songs.map((song) => (
             <button
               key={song.id}
-              onClick={() => onControl(song.id, -1)}
+              onClick={() => onSelectSong(song.id)}
               className={cn(
-                "w-full text-left px-4 py-3 rounded-md transition-all text-sm font-medium",
-                activeSong?.id === song.id
-                  ? "bg-blue-600 text-white shadow-lg shadow-blue-900/50"
-                  : "text-zinc-400 hover:bg-zinc-800"
+                "w-full text-left p-5 rounded-2xl transition-all duration-200 border relative overflow-hidden group cursor-pointer",
+                activeSongId === song.id
+                  ? "bg-blue-600 border-blue-500 shadow-xl shadow-blue-900/30 scale-105 z-10 hover:bg-blue-900"
+                  : "bg-zinc-800 border-transparent hover:bg-zinc-750 active:scale-95 hover:border-4 hover:border-blue-900 transition-all duration-200"
               )}
             >
-              {song.title}
+              <div className="relative z-10">
+                <div
+                  className={cn(
+                    "font-bold text-lg",
+                    activeSongId === song.id ? "text-white" : "text-zinc-200"
+                  )}
+                >
+                  {song.title}
+                </div>
+                {/* <div
+                  className={cn(
+                    "text-sm",
+                    activeSongId === song.id ? "text-blue-200" : "text-zinc-500"
+                  )}
+                >
+                  {song.artist}
+                </div> */}
+              </div>
+
+              {/* Active Indicator Pulse */}
+              {activeSongId === song.id && (
+                <div className="absolute right-4 top-1/2 -translate-y-1/2">
+                  <div className="flex gap-1">
+                    <div className="w-1 h-4 bg-white/50 animate-pulse" />
+                    <div className="w-1 h-6 bg-white/50 animate-pulse delay-75" />
+                    <div className="w-1 h-3 bg-white/50 animate-pulse delay-150" />
+                  </div>
+                </div>
+              )}
             </button>
           ))}
         </div>
-        <div className="p-2 border-t border-white/10">
-          <button
-            onClick={() => onControl(null, -1)}
-            className="w-full py-3 bg-red-900/20 text-red-500 border border-red-900/50 rounded-md hover:bg-red-900/40 uppercase text-xs font-bold tracking-widest"
-          >
-            Stop Display
-          </button>
-        </div>
-      </div>
 
-      {/* Lyrics Controller */}
-      <div className="flex-1 flex flex-col bg-zinc-950">
-        {activeSong ? (
-          <>
-            <div className="p-4 border-b border-white/10 bg-zinc-900">
-              <h1 className="font-bold text-lg">{activeSong.title}</h1>
-              <p className="text-zinc-500 text-sm">{activeSong.artist}</p>
-            </div>
-            <div className="flex-1 overflow-y-auto p-4 space-y-2">
-              {activeSong.lyrics.map((line, i) => (
-                <button
-                  key={i}
-                  onClick={() => onControl(activeSong.id, i)}
-                  className={cn(
-                    "w-full text-left p-4 rounded-xl text-lg transition-all flex items-start gap-4",
-                    activeLineIndex === i
-                      ? "bg-green-500/10 text-green-400 border border-green-500/30"
-                      : "hover:bg-zinc-900 text-zinc-500"
-                  )}
-                >
-                  <span className="font-mono text-xs opacity-30 mt-2 w-6">
-                    {(i + 1).toString().padStart(2, "0")}
-                  </span>
-                  <span className="leading-snug">{line}</span>
-                </button>
-              ))}
-              <div className="h-20" /> {/* Spacer */}
-            </div>
-          </>
-        ) : (
-          <div className="flex-1 flex items-center justify-center text-zinc-700 font-bold uppercase tracking-widest">
-            Ready to Rock
-          </div>
-        )}
+        {/* Blackout Button */}
+        <button
+          onClick={() => onSelectSong(null)}
+          className="w-full py-4 mt-8 rounded-xl bg-red-900/20 text-red-400 border border-red-900/50 hover:bg-red-900/30 font-bold tracking-widest uppercase text-xs cursor-pointer"
+        >
+          Stop / Blackout
+        </button>
       </div>
     </div>
   );
 };
 
-// --- SUB-COMPONENT: AUDIENCE VIEW ---
-const AudienceView = ({
-  song,
-  activeLineIndex,
-}: {
-  song: Song | null;
-  activeLineIndex: number;
-}) => {
-  const scrollRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    // Auto-scroll logic
-    if (activeLineIndex >= 0 && scrollRef.current) {
-      const activeEl = document.getElementById(`line-${activeLineIndex}`);
-      if (activeEl) {
-        activeEl.scrollIntoView({ behavior: "smooth", block: "center" });
-      }
-    }
-  }, [activeLineIndex]);
-
-  if (!song)
-    return (
-      <div className="h-screen w-full bg-black flex flex-col items-center justify-center space-y-4">
-        {/* Waiting State */}
-        <div className="w-16 h-16 rounded-full border-4 border-zinc-800 border-t-white animate-spin" />
-        <p className="text-zinc-500 font-medium tracking-widest text-xs uppercase animate-pulse">
-          Waiting for band...
-        </p>
-      </div>
-    );
-
+// --- AUDIENCE VIEW (Scrollable, Full Lyrics) ---
+const AudienceView = ({ song }: { song: Song | null }) => {
   return (
-    <div
-      className={cn(
-        "h-screen w-full overflow-hidden relative transition-colors duration-[1500ms] ease-in-out bg-gradient-to-br",
-        song.color
-      )}
-    >
-      {/* Apple Music Style Background Elements */}
-      <div className="absolute inset-0 bg-black/40 backdrop-blur-[100px] z-0" />
-      <div className="absolute inset-0 z-0 opacity-20 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] brightness-100 contrast-150" />
-
-      <div className="relative z-10 h-full flex flex-col p-6 md:p-12 pb-24">
-        {/* Song Info Header */}
+    <AnimatePresence mode="wait">
+      {!song ? (
+        // IDLE STATE (Waiting for band)
         <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          key={song.id}
-          className="mb-8"
+          key="idle"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="h-screen w-full bg-black flex flex-col items-center justify-center p-8 text-center"
         >
-          <h1 className="text-white text-3xl md:text-5xl font-extrabold tracking-tight mb-2 drop-shadow-lg">
-            {song.title}
-          </h1>
-          <p className="text-white/70 text-xl font-medium drop-shadow-md">
-            {song.artist}
-          </p>
+          <div className="w-16 h-16 mb-6 rounded-full border-4 border-zinc-800 border-t-white/50 animate-spin" />
+          <h2 className="text-white/40 font-medium tracking-[0.2em] text-sm uppercase">
+            Waiting for next song...
+          </h2>
         </motion.div>
-
-        {/* Lyrics Scroll Area */}
-        <div
-          className="flex-1 overflow-y-auto no-scrollbar mask-image-scroller"
-          ref={scrollRef}
+      ) : (
+        // LYRICS STATE
+        <motion.div
+          key={song.id}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.8 }}
+          className={cn(
+            "h-screen w-full overflow-y-auto relative transition-colors duration-[1500ms] ease-in-out bg-gradient-to-br",
+            song.color
+          )}
         >
-          <div className="py-[45vh] space-y-8 md:space-y-12">
-            {song.lyrics.map((line, i) => {
-              const isActive = i === activeLineIndex;
-              const isPast = i < activeLineIndex;
+          {/* Background Texture */}
+          <div className="fixed inset-0 bg-black/30 pointer-events-none" />
+          <div className="fixed inset-0 opacity-10 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] pointer-events-none" />
 
-              return (
-                <motion.div
-                  id={`line-${i}`}
-                  key={`${song.id}-${i}`}
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{
-                    opacity: isActive ? 1 : isPast ? 0.3 : 0.15,
-                    scale: isActive ? 1.05 : 1,
-                    filter: isActive ? "blur(0px)" : "blur(2px)",
-                    y: 0,
+          <div className="relative z-10 min-h-full p-6 pb-32 md:p-12 md:pb-48 flex flex-col">
+            {/* Song Header (Sticky-ish) */}
+            <motion.div
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.2 }}
+              className="mb-12 mt-4"
+            >
+              <h1 className="text-white text-4xl md:text-6xl font-black tracking-tight leading-none mb-2 drop-shadow-xl">
+                {song.title}
+              </h1>
+              {/* <p className="text-white/60 text-xl md:text-2xl font-medium">
+                {song.artist}
+              </p> */}
+            </motion.div>
+
+            {/* Full Lyrics Sheet */}
+            <div className="space-y-6 md:space-y-8 max-w-2xl">
+              {song.lyrics.map((line, i) => (
+                <motion.p
+                  key={i}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{
+                    delay: 0.3 + i * 0.05, // Stagger effect
+                    duration: 0.5,
                   }}
-                  transition={{ duration: 0.6, type: "spring", stiffness: 100 }}
-                  className={cn(
-                    "text-3xl md:text-6xl font-black leading-[1.15] tracking-tight origin-left transition-all duration-500 select-none",
-                    isActive ? "text-white drop-shadow-2xl" : "text-white/80"
-                  )}
+                  className="text-white/90 text-2xl md:text-4xl font-bold leading-tight drop-shadow-md"
                 >
                   {line}
-                </motion.div>
-              );
-            })}
+                </motion.p>
+              ))}
+            </div>
+
+            {/* Footer / End Marker */}
+            <div className="mt-12 flex justify-center opacity-30">
+              <div className="w-2 h-2 bg-white rounded-full mx-1" />
+              <div className="w-2 h-2 bg-white rounded-full mx-1" />
+              <div className="w-2 h-2 bg-white rounded-full mx-1" />
+            </div>
           </div>
-        </div>
-      </div>
-    </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 };
