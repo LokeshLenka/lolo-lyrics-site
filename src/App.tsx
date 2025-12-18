@@ -9,7 +9,7 @@ import type { Song } from "./songs";
 // --- CONFIGURATION ---
 const BROKER_URL = "wss://broker.emqx.io:8084/mqtt";
 const MQTT_TOPIC = "concert/live/unique-id-998877";
-const ADMIN_PIN = "12345"; // <--- CHANGE THIS TO YOUR SECRET PIN
+const ADMIN_PIN = "07070"; // <--- CHANGE THIS TO YOUR SECRET PIN
 
 function cn(...inputs: (string | undefined | null | false)[]) {
   return twMerge(clsx(inputs));
