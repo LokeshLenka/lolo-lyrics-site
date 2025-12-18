@@ -237,13 +237,13 @@ const AudienceView = ({ song }: { song: Song | null }) => {
                   </motion.p>
                 ))}
               </div>
+            </div>
 
-              {/* End Marker */}
-              {/* <div className="mt-12 flex justify-center opacity-30">
-                <div className="w-2 h-2 bg-white rounded-full mx-1" />
-                <div className="w-2 h-2 bg-white rounded-full mx-1" />
-                <div className="w-2 h-2 bg-white rounded-full mx-1" />
-              </div> */}
+            {/* End Marker */}
+            <div className=" mb-2 flex justify-center opacity-30">
+              <div className="w-2 h-2 bg-white rounded-full mx-1" />
+              <div className="w-2 h-2 bg-white rounded-full mx-1" />
+              <div className="w-2 h-2 bg-white rounded-full mx-1" />
             </div>
             <div className="text-center flex-col justify-center">
               <p>@ SRKR LOLO</p>
