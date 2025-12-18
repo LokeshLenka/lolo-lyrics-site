@@ -6,7 +6,7 @@ export type Song = {
   //   artist: string;
   // Use Tailwind gradient classes here
   color: string;
-  title_color: string;
+  //   title_color: string;
   lyrics: string[];
 };
 
@@ -16,7 +16,7 @@ export const SONG_DATABASE: Song[] = [
     title: "Nuvvunte Chaley",
     // artist: "",
     color: "from-purple-900 via-indigo-900 to-blue-900",
-    title_color: "from-blue-900 via-indigo-900 to-purple-900",
+    // title_color: "from-blue-900 via-indigo-900 to-purple-900",
     lyrics: [
       "Oka Chooputo Naalone Puttinde",
       "Edo Vintaga Gundelo Cherinde",
@@ -76,7 +76,7 @@ export const SONG_DATABASE: Song[] = [
     title: "Yellow", // Replace with your Song 2
     // artist: "Coldplay",
     color: "from-yellow-700 via-orange-800 to-red-900",
-    title_color: "from-red-900 via-orange-800 to-yellow-700",
+    // title_color: "from-red-900 via-orange-800 to-yellow-700",
     lyrics: [
       "Look at the stars",
       "Look how they shine for you",
@@ -92,8 +92,8 @@ export const SONG_DATABASE: Song[] = [
     id: "3",
     title: "Sunil", // Replace with your Song 2
     // artist: "Coldplay",
-    color: "from-yellow-700 via-orange-800 to-red-900",
-    title_color: "from-red-900 via-orange-800 to-yellow-700",
+    color: "from-fuchsia-900 via-purple-800 to-blue-900",
+    // title_color: "from-red-900 via-orange-800 to-yellow-700",
     lyrics: [
       "sunil mayya  at the stars",
       "Look how they shine for you",
