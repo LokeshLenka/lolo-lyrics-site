@@ -35,8 +35,8 @@ export default function App() {
     mqttClient.on("connect", () => {
       setStatus("Connected");
       mqttClient.subscribe(MQTT_TOPIC);
-    });
-
+    });   
+    
     mqttClient.on("message", (topic, message) => {
       if (topic === MQTT_TOPIC) {
         const payload = JSON.parse(message.toString());
@@ -294,7 +294,7 @@ const AudienceView = ({ song }: { song: Song | null }) => {
                 target="blank"
               >
                 {" "}
-                <p className="mb-5 inline-block">Developed by Lokesh</p>
+                <p className="mb-5 inline-block" style={{ fontFamily: "Poppins" }}>Developed by Lokesh</p>
               </a>
             </div>
           </div>

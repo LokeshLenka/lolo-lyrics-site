@@ -51,3 +51,12 @@ body {
     transparent 100%
   );
 }
+
+@import url("https://fonts.cdnfonts.com/css/poppins");
+
+font-face {
+  font-family: "Poppins";
+  src: url("https://fonts.cdnfonts.com/css/poppins");
+  font-weight: 900;
+  font-style: normal;
+}
