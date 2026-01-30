@@ -294,13 +294,8 @@ const AudienceView = ({ song }: { song: Song | null }) => {
                 target="blank"
               >
                 {" "}
-<<<<<<< HEAD
                 <p className="mb-5 inline-block">Developed by Lokesh</p>
               </a> */}
-=======
-                <p className="mb-5 inline-block" style={{ fontFamily: "Poppins" }}>Developed by Lokesh</p>
-              </a>
->>>>>>> 5cd0cb586858f076c86de74734516ff35e27fe8a
             </div>
           </div>
         </motion.div>
