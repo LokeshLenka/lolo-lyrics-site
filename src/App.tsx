@@ -289,13 +289,13 @@ const AudienceView = ({ song }: { song: Song | null }) => {
             </div>
             <div className="text-center flex-col justify-center">
               <p>@ SRKR LOLO</p>
-              <a
+              {/* <a
                 href="https://www.linkedin.com/in/lenka-lokesh/"
                 target="blank"
               >
                 {" "}
                 <p className="mb-5 inline-block">Developed by Lokesh</p>
-              </a>
+              </a> */}
             </div>
           </div>
         </motion.div>
