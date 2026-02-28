@@ -71,40 +71,8 @@ export const SONG_DATABASE: Song[] = [
       // ... Add full lyrics here
     ],
   },
-  {
-    id: "2",
-    title: "Yellow", // Replace with your Song 2
-    // artist: "Coldplay",
-    color: "from-yellow-700 via-orange-800 to-red-900",
-    // title_color: "from-red-900 via-orange-800 to-yellow-700",
-    lyrics: [
-      "Look at the stars",
-      "Look how they shine for you",
-      "And everything you do",
-      "Yeah, they were all yellow",
-      "I came along",
-      "I wrote a song for you",
-      "And all the things you do",
-      "And it was called Yellow",
-    ],
-  },
-  {
-    id: "3",
-    title: "Sunil", // Replace with your Song 2
-    // artist: "Coldplay",
-    color: "from-fuchsia-900 via-purple-800 to-blue-900",
-    // title_color: "from-red-900 via-orange-800 to-yellow-700",
-    lyrics: [
-      "sunil mayya  at the stars",
-      "Look how they shine for you",
-      "And everything you do",
-      "Yeah, they were all yellow",
-      "I came along",
-      "I wrote a song for you",
-      "And all the things you do",
-      "And it was called Yellow",
-    ],
-  },
+
+
   
   {
     id: "4",
