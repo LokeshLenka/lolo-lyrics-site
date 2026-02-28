@@ -35,8 +35,8 @@ export default function App() {
     mqttClient.on("connect", () => {
       setStatus("Connected");
       mqttClient.subscribe(MQTT_TOPIC);
-    });   
-    
+    });
+
     mqttClient.on("message", (topic, message) => {
       if (topic === MQTT_TOPIC) {
         const payload = JSON.parse(message.toString());
@@ -118,7 +118,6 @@ export default function App() {
   );
 }
 
-// --- ADMIN PANEL (Simplified: Just a Song Selector) ---
 const AdminPanel = ({
   songs,
   activeSongId,
@@ -131,10 +130,11 @@ const AdminPanel = ({
   onSelectSong: (id: string | null) => void;
 }) => {
   return (
-    <div className="min-h-screen bg-zinc-900 text-white p-6 font-sans">
-      <div className="max-w-md mx-auto space-y-6">
-        {/* Header */}
-        <div className="flex justify-between items-end border-b border-white/10 pb-4">
+    // Make the main container strictly h-screen and hidden overflow
+    <div className="h-screen bg-zinc-900 text-white font-sans flex flex-col">
+      <div className="max-w-md mx-auto w-full flex flex-col h-full p-6">
+        {/* Header - Fixed at top */}
+        <div className="flex justify-between items-end border-b border-white/10 pb-4 mb-4 shrink-0">
           <div>
             <h1 className="text-2xl font-bold tracking-tight">Live Control</h1>
             <p className="text-zinc-500 text-sm">
@@ -145,43 +145,35 @@ const AdminPanel = ({
             <div
               className={cn(
                 "w-2 h-2 rounded-full",
-                status === "Connected" ? "bg-green-500" : "bg-red-500"
+                status === "Connected" ? "bg-green-500" : "bg-red-500",
               )}
             />
             {status}
           </div>
         </div>
 
-        {/* Song Grid */}
-        <div className="space-y-3">
+        {/* Song Grid - This part scrolls */}
+        <div className="flex-1 overflow-y-auto space-y-3 no-scrollbar pb-4">
           {songs.map((song) => (
             <button
               key={song.id}
               onClick={() => onSelectSong(song.id)}
               className={cn(
-                "w-full text-left p-5 rounded-2xl transition-all duration-200 border relative overflow-hidden group cursor-pointer",
+                "w-full text-left p-5 rounded-2xl transition-all duration-200 border relative group cursor-pointer",
                 activeSongId === song.id
-                  ? "bg-blue-600 border-blue-500 shadow-xl shadow-blue-900/30 scale-105 z-10 hover:bg-blue-900"
-                  : "bg-zinc-800 border-transparent hover:bg-zinc-750 active:scale-95 hover:border-4 hover:border-blue-900 transition-all duration-200"
+                  ? "bg-blue-600 border-blue-500 shadow-xl shadow-blue-900/30 scale-100 md:scale-105 z-10 hover:bg-blue-900"
+                  : "bg-zinc-800 border-transparent hover:bg-zinc-750 active:scale-95 hover:border-4 hover:border-blue-900 transition-all duration-200",
               )}
             >
               <div className="relative z-10">
                 <div
                   className={cn(
                     "font-bold text-lg",
-                    activeSongId === song.id ? "text-white" : "text-zinc-200"
+                    activeSongId === song.id ? "text-white" : "text-zinc-200",
                   )}
                 >
                   {song.title}
                 </div>
-                {/* <div
-                  className={cn(
-                    "text-sm",
-                    activeSongId === song.id ? "text-blue-200" : "text-zinc-500"
-                  )}
-                >
-                  {song.artist}
-                </div> */}
               </div>
 
               {/* Active Indicator Pulse */}
@@ -198,13 +190,15 @@ const AdminPanel = ({
           ))}
         </div>
 
-        {/* Blackout Button */}
-        <button
-          onClick={() => onSelectSong(null)}
-          className="w-full py-4 mt-8 rounded-xl bg-red-900/20 text-red-400 border border-red-900/50 hover:bg-red-900/30 font-bold tracking-widest uppercase text-xs cursor-pointer"
-        >
-          Stop / Blackout
-        </button>
+        {/* Blackout Button - Fixed at bottom */}
+        <div className="shrink-0 mt-2 pt-2 border-t border-white/5">
+          <button
+            onClick={() => onSelectSong(null)}
+            className="w-full py-4 rounded-xl bg-red-900/20 text-red-400 border border-red-900/50 hover:bg-red-900/30 font-bold tracking-widest uppercase text-xs cursor-pointer"
+          >
+            Stop / Blackout
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -240,7 +234,7 @@ const AudienceView = ({ song }: { song: Song | null }) => {
           // 1. OUTER CONTAINER: Fixed height, NO SCROLL. Holds the background.
           className={cn(
             "h-screen w-full relative overflow-hidden bg-gradient-to-br",
-            song.color
+            song.color,
           )}
         >
           {/* Static Background Effects */}
