@@ -3,10 +3,7 @@
 export type Song = {
   id: string;
   title: string;
-  //   artist: string;
-  // Use Tailwind gradient classes here
   color: string;
-  //   title_color: string;
   lyrics: string[];
 };
 
@@ -14,70 +11,54 @@ export const SONG_DATABASE: Song[] = [
   {
     id: "1",
     title: "Nuvvunte Chaley",
-    // artist: "",
-    color: "from-purple-900 via-indigo-900 to-blue-900",
-    // title_color: "from-blue-900 via-indigo-900 to-purple-900",
+    // Deep Concert Blue
+    color: "from-slate-950 via-blue-950 to-indigo-950",
     lyrics: [
       "Oka Chooputo Naalone Puttinde",
       "Edo Vintaga Gundelo Cherinde",
       "Nuvvavaro Naalo Ani Adigane",
       "Tanega Premani Thelipinde",
-
       "Parichayam Ledani Adiga Premante",
       "Kalisanga Ikapai Manamega Ande",
       "Vethikina Dorakani Artham Premade",
       "Adi Neekento Oka Matalo Cheppale",
-
       "Nuvvunte Chaley",
       "Nuvvunte Chaley",
       "Nuvvunte Chaley",
-
       "Matalatho Cheppamante Cheppalene",
       "Bhaavamedo Bhaashalake Andanande",
       "Ademito Kuduruga Undalene Nuvvunte",
       "Adigite Ademito Ardhankade",
-
       "Ninna Monna Naalo Unna Nene Kaade",
       "Puttindante Neetho Thappa",
       "Pone Pode Premanthe",
-
       "Daareleni Oorine Adigaanuga",
       "Nuvvega Daarani Naaku Chooputundi",
       "Kammukunna Mabbulo Vethikaanuga",
       "Are Gaali Vaanai Nannu Thaakutundi",
       "Naake Theliyani Naalo Yuddhama",
-
       "Lolona Sandhrama",
       "Lede Pongutunnade Inkedo",
-
       "Peru Leducuga Inthe Maata Raaduga",
       "Anthe Oppukomari Vinthele",
-
       "Nuvvunte Chale",
       "Matalatho Cheppamante Cheppalene",
       "Bhaavamedo Bhaashalake Andanande",
       "Ademito Kuduruga Undalene Nuvvunte",
       "Adigite Ademito Ardhankade",
-
       "Ninna Monna Naalo Unna Nene Kaade",
       "Puttindante Neetho Thappa",
       "Pone Pode Premanthe",
-
       "Oo Oo Oo Oo Nuvvunte Chaley",
       "Oo Oo Oo Oo Nuvvunte Chaley",
-
       "Nuvvunte Chaley",
-
-      // ... Add full lyrics here
     ],
   },
-
-
-  
   {
     id: "4",
     title: "Ammayi kitiki pakkana",
-    color: "from-purple-900 via-indigo-900 to-blue-900",
+    // Midnight Magenta
+    color: "from-zinc-950 via-fuchsia-950 to-pink-950",
     lyrics: [
       "ammayi kitiki pakkana kurchundhi",
       "kitikilonchem kanabaduthundhi",
@@ -101,7 +82,8 @@ export const SONG_DATABASE: Song[] = [
   {
     id: "5",
     title: "Oy Oy",
-    color: "from-yellow-700 via-orange-800 to-red-900",
+    // Ember Glow
+    color: "from-gray-950 via-amber-950 to-orange-950",
     lyrics: [
       "Noota debbai aaru beach",
       "house lo Prema Devatha",
@@ -132,7 +114,8 @@ export const SONG_DATABASE: Song[] = [
   {
     id: "6",
     title: "Karige loga",
-    color: "from-fuchsia-900 via-purple-800 to-blue-900",
+    // Ultraviolet
+    color: "from-neutral-950 via-violet-950 to-purple-950",
     lyrics: [
       "Ooooooo Ooooooooooo",
       "Ooooooo Ooooooooooo",
@@ -171,7 +154,8 @@ export const SONG_DATABASE: Song[] = [
   {
     id: "7",
     title: "Apudo ipudo",
-    color: "from-pink-900 via-rose-800 to-red-900",
+    // Blood Moon
+    color: "from-stone-950 via-red-950 to-rose-950",
     lyrics: [
       ",SING ALONG!!",
       "Apudo ipudo epudo kalagannane cheli",
@@ -195,7 +179,8 @@ export const SONG_DATABASE: Song[] = [
   {
     id: "8",
     title: "Mix",
-    color: "from-emerald-900 via-teal-800 to-cyan-900",
+    // Matrix Green
+    color: "from-stone-950 via-emerald-950 to-teal-950",
     lyrics: [
       ",SING ALONG!!",
       "Oh my beautiful girl",
@@ -232,13 +217,12 @@ export const SONG_DATABASE: Song[] = [
       "Jamurathiri jabilamma, jola paadana ila",
       "Jorugalilo jaji komma, jaraneeyake kala...",
     ],
-  }
-  ,
-  
+  },
   {
     id: "9",
     title: "Kammani",
-    color: "from-purple-900 via-indigo-900 to-blue-900",
+    // Cyberpunk Cyan
+    color: "from-slate-950 via-cyan-950 to-blue-950",
     lyrics: [
       "kammani ee prema lekhane",
       "rasindi hrudayame",
@@ -285,7 +269,8 @@ export const SONG_DATABASE: Song[] = [
   {
     id: "10",
     title: "Mix",
-    color: "from-yellow-700 via-orange-800 to-red-900",
+    // Sunset Ash
+    color: "from-neutral-950 via-orange-950 to-red-950",
     lyrics: [
       "Nijanga nenena..ila ne jatha lo unna",
       "idantha preme na..",
@@ -331,7 +316,8 @@ export const SONG_DATABASE: Song[] = [
   {
     id: "11",
     title: "Monna Kanipinchavu",
-    color: "from-fuchsia-900 via-purple-800 to-blue-900",
+    // Phantom Purple
+    color: "from-zinc-950 via-purple-950 to-indigo-950",
     lyrics: [
       "Monna kanipinchavu, maimarachi poyanu",
       "Andaalato nannu, thutlu podicheshave",
@@ -371,7 +357,8 @@ export const SONG_DATABASE: Song[] = [
   {
     id: "12",
     title: "Inthandham",
-    color: "from-pink-900 via-rose-800 to-red-900",
+    // Velvet Rose
+    color: "from-stone-950 via-rose-950 to-pink-950",
     lyrics: [
       "Inthandham Daari Mallindha",
       "Bhoomipaike Cherukunnadhaa",
@@ -408,7 +395,8 @@ export const SONG_DATABASE: Song[] = [
   {
     id: "13",
     title: "Manasu Maree",
-    color: "from-emerald-900 via-teal-800 to-cyan-900",
+    // Toxic Glow
+    color: "from-gray-950 via-teal-950 to-emerald-950",
     lyrics: [
       "Manasu maree mathuga thoogipootunnade",
       "emo ee vela..",
@@ -439,7 +427,8 @@ export const SONG_DATABASE: Song[] = [
   {
     id: "14",
     title: "Singles Anthem",
-    color: "from-indigo-900 via-purple-800 to-fuchsia-900",
+    // Dark Neon Purple
+    color: "from-zinc-950 via-indigo-950 to-fuchsia-950",
     lyrics: [
       "ey High class nunchi",
       "Low Classu Daakaa naa crush le",
@@ -489,7 +478,8 @@ export const SONG_DATABASE: Song[] = [
   {
     id: "15",
     title: "Oh Priya Priya",
-    color: "from-cyan-900 via-blue-800 to-indigo-900",
+    // Oceanic Depth
+    color: "from-slate-950 via-blue-950 to-cyan-950",
     lyrics: [
       "Oh priya priya",
       "o my dear priya ne premalo",
@@ -530,7 +520,8 @@ export const SONG_DATABASE: Song[] = [
   {
     id: "16",
     title: "Chikiri",
-    color: "from-orange-900 via-red-800 to-rose-900",
+    // Burnt Sienna
+    color: "from-neutral-950 via-red-950 to-orange-950",
     lyrics: [
       "Oh Ohh Ohhh La La La La La",
       "Oh Ohh Ohhh La La La La La..",
@@ -572,7 +563,8 @@ export const SONG_DATABASE: Song[] = [
   {
     id: "17",
     title: "Aa Sitadevi Navvula",
-    color: "from-teal-900 via-emerald-800 to-green-900",
+    // Deep Forest
+    color: "from-stone-950 via-emerald-950 to-green-950",
     lyrics: [
       "Aa Seetadevi Navvula",
       "Unnave Enti Maatala",
@@ -619,7 +611,8 @@ export const SONG_DATABASE: Song[] = [
   {
     id: "18",
     title: "Mix",
-    color: "from-rose-900 via-pink-800 to-fuchsia-900",
+    // Nightshade
+    color: "from-zinc-950 via-pink-950 to-purple-950",
     lyrics: [
       "Chitikelu vinave BABY",
       "Kilakilamanave BABY",
@@ -640,7 +633,7 @@ export const SONG_DATABASE: Song[] = [
       "Get hight with me",
       "Hamsaro",
       "Yevaina yendhukaina",
-      "Don’t worry",
+      "Don't worry",
       "Hamsaro O hamsaro",
       "Hamsaro",
       "Marry me marry me",
@@ -666,7 +659,8 @@ export const SONG_DATABASE: Song[] = [
   {
     id: "19",
     title: "Sirivennela",
-    color: "from-purple-900 via-indigo-900 to-blue-900",
+    // Astral Void
+    color: "from-slate-950 via-indigo-950 to-violet-950",
     lyrics: [
       "Nela Rajuni Ila Ranini",
       "Kalipindi Kadaa Sirivennela",
@@ -703,7 +697,8 @@ export const SONG_DATABASE: Song[] = [
   {
     id: "20",
     title: "Nuvvuntey Chaaley",
-    color: "from-yellow-700 via-orange-800 to-red-900",
+    // Smoldering Coal
+    color: "from-neutral-950 via-amber-950 to-red-950",
     lyrics: [
       "Oka Chooputo Naalone Puttinde",
       "Yedho Vinthaga Gundelo Cherinde",
@@ -744,7 +739,8 @@ export const SONG_DATABASE: Song[] = [
   {
     id: "21",
     title: "Kanulanu Thaake",
-    color: "from-fuchsia-900 via-purple-800 to-blue-900",
+    // Deep Amethyst
+    color: "from-zinc-950 via-purple-950 to-fuchsia-950",
     lyrics: [
       "O kanulanu thaake o kala",
       "Choope ninnila",
@@ -779,7 +775,8 @@ export const SONG_DATABASE: Song[] = [
   {
     id: "22",
     title: "Nenu Nenuga",
-    color: "from-pink-900 via-rose-800 to-red-900",
+    // Black Cherry
+    color: "from-stone-950 via-rose-950 to-red-950",
     lyrics: [
       "Nenu nenuga lene ninna monnala",
       "Leni poni oohallo emito ila",
@@ -808,7 +805,8 @@ export const SONG_DATABASE: Song[] = [
   {
     id: "23",
     title: "My heart is beating",
-    color: "from-emerald-900 via-teal-800 to-cyan-900",
+    // Abyss Green
+    color: "from-gray-950 via-teal-950 to-emerald-950",
     lyrics: [
       "My heart is beating adhola",
       "Thelusukovaa.. adhi",
@@ -843,39 +841,5 @@ export const SONG_DATABASE: Song[] = [
       "Yennaali waiting anelaa",
       "Tharumuthondi.. madhi",
     ],
-  }
-
-
-
-
+  },
 ];
-
-// colors
-// "from-red-900 via-pink-800 to-purple-900"
-// "from-orange-900 via-red-800 to-pink-900"
-// "from-amber-900 via-orange-700 to-red-800"
-// "from-yellow-800 via-amber-900 to-orange-950"
-// Cool & Moody
-// typescript
-// "from-blue-950 via-indigo-900 to-purple-900"
-// "from-cyan-900 via-blue-900 to-indigo-950"
-// "from-teal-900 via-cyan-900 to-blue-950"
-// "from-slate-900 via-blue-900 to-indigo-900"
-// Neon & Electric
-// typescript
-// "from-fuchsia-900 via-purple-800 to-blue-900"
-// "from-pink-900 via-fuchsia-800 to-violet-900"
-// "from-violet-900 via-purple-800 to-fuchsia-900"
-// "from-purple-950 via-fuchsia-900 to-pink-800"
-// Earthy & Deep
-// typescript
-// "from-stone-900 via-amber-950 to-orange-900"
-// "from-neutral-950 via-stone-900 to-zinc-900"
-// "from-emerald-950 via-teal-900 to-cyan-950"
-// "from-green-950 via-emerald-900 to-teal-900"
-// Dramatic Contrasts
-// typescript
-// "from-rose-950 via-red-900 to-orange-950"
-// "from-indigo-950 via-violet-900 to-fuchsia-950"
-// "from-lime-900 via-green-900 to-emerald-950"
-// "from-sky-950 via-blue-900 to-violet-950"
