@@ -1,511 +1,204 @@
-import React, { useState, useEffect, useCallback, useMemo } from "react";
-import mqtt from "mqtt";
-import { motion, AnimatePresence } from "framer-motion";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { supabase } from "./lib/supabase";
+import { AnimatePresence, motion } from "framer-motion";
+import { Activity, AlertCircle, Clock, LogOut, Plus, Radio, ShieldAlert, X } from "lucide-react";
 import { clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
-import { SONG_DATABASE } from "./songs";
-import type { Song } from "./songs";
 
-import {
-  Search,
-  Radio,
-  Activity,
-  Clock,
-  ShieldAlert,
-  Power,
-  AlertCircle,
-} from "lucide-react"; // npm install lucide-react
-
-// --- ENTERPRISE CONFIGURATION ---
-// In production, use environment variables (e.g., import.meta.env.VITE_MQTT_BROKER)
-const CONFIG = {
-  BROKER_URL:
-    import.meta.env?.VITE_MQTT_BROKER || "wss://broker.emqx.io:8084/mqtt",
-  MQTT_TOPIC:
-    import.meta.env?.VITE_MQTT_TOPIC || "concert/live/unique-id-998877",
-  ADMIN_PIN: import.meta.env?.VITE_ADMIN_PIN || "07070",
-};
-
-// Utility for Tailwind class merging
 export function cn(...inputs: (string | undefined | null | false)[]) {
   return twMerge(clsx(inputs));
 }
 
-// --- CUSTOM HOOK: MQTT LOGIC ---
-function useMqttSync() {
-  const [activeSongId, setActiveSongId] = useState<string | null>(null);
-  const [client, setClient] = useState<mqtt.MqttClient | null>(null);
-  const [status, setStatus] = useState<
-    "Connecting" | "Connected" | "Disconnected"
-  >("Connecting");
+type Song = { id: string; title: string; lyrics: string[]; color: string; sortOrder: number | null };
+type DbSong = { id: number; title: string; lyrics: string; color: string; sort_order: number | null };
+type ConnectionStatus = "Connecting" | "Connected" | "Disconnected";
 
-  useEffect(() => {
-    const mqttClient = mqtt.connect(CONFIG.BROKER_URL, {
-      reconnectPeriod: 1000, // Enterprise: Auto-reconnect resilience
-    });
+const DEFAULT_COLOR = "from-slate-950 via-blue-950 to-indigo-950";
 
-    mqttClient.on("connect", () => {
-      setStatus("Connected");
-      mqttClient.subscribe(CONFIG.MQTT_TOPIC);
-    });
-
-    mqttClient.on("reconnect", () => setStatus("Connecting"));
-    mqttClient.on("offline", () => setStatus("Disconnected"));
-
-    mqttClient.on("message", (topic, message) => {
-      if (topic === CONFIG.MQTT_TOPIC) {
-        try {
-          const payload = JSON.parse(message.toString());
-          if (payload?.songId !== undefined) {
-            setActiveSongId(payload.songId);
-          }
-        } catch (e) {
-          console.error("Malformed MQTT Payload", e);
-        }
-      }
-    });
-
-    setClient(mqttClient);
-    return () => {
-      mqttClient.end();
-    };
-  }, []);
-
-  const publishSong = useCallback(
-    (songId: string | null) => {
-      setActiveSongId(songId); // Optimistic UI update
-      if (client?.connected) {
-        client.publish(CONFIG.MQTT_TOPIC, JSON.stringify({ songId }), {
-          retain: true,
-          qos: 1,
-        });
-      }
-    },
-    [client],
-  );
-
-  return { activeSongId, status, publishSong };
+function toSong(row: DbSong): Song {
+  return {
+    id: String(row.id),
+    title: row.title,
+    lyrics: row.lyrics.split("\n"),
+    color: row.color || DEFAULT_COLOR,
+    sortOrder: row.sort_order,
+  };
 }
 
-// --- MAIN APP COMPONENT ---
-export default function App() {
-  const [isAdminRoute, setIsAdminRoute] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const { activeSongId, status, publishSong } = useMqttSync();
+function useLiveSong() {
+  const [activeSong, setActiveSong] = useState<Song | null>(null);
+  const [status, setStatus] = useState<ConnectionStatus>("Connecting");
 
-  useEffect(() => {
-    setIsAdminRoute(window.location.pathname.includes("/admin"));
-  }, []);
-
-  const activeSong = useMemo(
-    () => SONG_DATABASE.find((s) => s.id === activeSongId) || null,
-    [activeSongId],
-  );
-
-  if (!isAdminRoute) return <AudienceView song={activeSong} />;
-  if (!isAuthenticated)
-    return <AuthScreen onAuth={() => setIsAuthenticated(true)} />;
-
-  return (
-    <AdminPanel
-      songs={SONG_DATABASE}
-      activeSongId={activeSongId}
-      status={status}
-      onSelectSong={publishSong}
-    />
-  );
-}
-
-// --- AUTH SCREEN (GLASSMORPHISM) ---
-const AuthScreen = React.memo(({ onAuth }: { onAuth: () => void }) => {
-  const [pinInput, setPinInput] = useState("");
-  const [error, setError] = useState(false);
-
-  const handlePinSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (pinInput === CONFIG.ADMIN_PIN) {
-      onAuth();
-    } else {
-      setError(true);
-      setPinInput("");
-      setTimeout(() => setError(false), 500);
+  const loadSong = useCallback(async (songId: number | null) => {
+    if (songId === null) {
+      setActiveSong(null);
+      return;
     }
+
+    const { data, error } = await supabase
+      .from("songs")
+      .select("id, title, lyrics, color, sort_order")
+      .eq("id", songId)
+      .single();
+
+    if (error || !data) {
+      console.error("Could not load live song:", error?.message);
+      setActiveSong(null);
+      return;
+    }
+
+    setActiveSong(toSong(data as DbSong));
+  }, []);
+
+  useEffect(() => {
+    async function loadInitialState() {
+      const { data, error } = await supabase
+        .from("live_state")
+        .select("active_song_id")
+        .eq("id", 1)
+        .single();
+
+      if (error) {
+        console.error("Could not load live state:", error.message);
+        setStatus("Disconnected");
+        return;
+      }
+
+      await loadSong(data.active_song_id);
+    }
+
+    loadInitialState();
+
+    const channel = supabase
+      .channel("live-state")
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "live_state", filter: "id=eq.1" },
+        (payload) => loadSong((payload.new as { active_song_id: number | null }).active_song_id),
+      )
+      .subscribe((channelStatus) => {
+        setStatus(channelStatus === "SUBSCRIBED" ? "Connected" : "Connecting");
+        if (["CHANNEL_ERROR", "TIMED_OUT", "CLOSED"].includes(channelStatus)) setStatus("Disconnected");
+      });
+
+    return () => { supabase.removeChannel(channel); };
+  }, [loadSong]);
+
+  return { activeSong, activeSongId: activeSong?.id ?? null, status };
+}
+
+export default function App() {
+  const isAdminRoute = window.location.pathname.startsWith("/admin");
+  const { activeSong, activeSongId, status } = useLiveSong();
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [songs, setSongs] = useState<Song[]>([]);
+
+  const loadSongs = useCallback(async () => {
+    const { data, error } = await supabase
+      .from("songs")
+      .select("id, title, lyrics, color, sort_order")
+      .order("sort_order", { ascending: true });
+    if (error) throw error;
+    setSongs((data as DbSong[]).map(toSong));
+  }, []);
+
+  const verifySession = useCallback(async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) { setIsAdmin(false); return; }
+    const { data: profile, error } = await supabase.from("profiles").select("role").eq("id", user.id).single();
+    if (error || profile?.role !== "admin") {
+      await supabase.auth.signOut();
+      setIsAdmin(false);
+      return;
+    }
+    setIsAdmin(true);
+    await loadSongs();
+  }, [loadSongs]);
+
+  useEffect(() => { if (isAdminRoute) void verifySession(); }, [isAdminRoute, verifySession]);
+
+  const login = async (email: string, password: string) => {
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) throw error;
+    await verifySession();
   };
 
-  return (
-    <div className="relative flex min-h-screen items-center justify-center bg-zinc-950 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-zinc-900 to-black p-4">
-      {/* Background Ambient Glow */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-blue-600/20 blur-[120px] rounded-full pointer-events-none" />
+  const setLiveSong = async (songId: string | null) => {
+    const { error } = await supabase.rpc("set_live_song", { p_song_id: songId === null ? null : Number(songId) });
+    if (error) throw error;
+  };
 
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="relative z-10 w-full max-w-sm rounded-3xl border border-white/10 bg-white/5 p-8 backdrop-blur-2xl shadow-2xl"
-      >
-        <div className="mb-8 text-center">
-          <h2 className="text-sm font-semibold tracking-widest text-zinc-400 uppercase mb-2">
-            System Access
-          </h2>
-          <div className="h-1 w-12 bg-blue-500 rounded-full mx-auto" />
-        </div>
+  if (!isAdminRoute) return <AudienceView song={activeSong} />;
+  if (!isAdmin) return <LoginScreen onLogin={login} />;
+  return <AdminPanel songs={songs} activeSongId={activeSongId} status={status} refreshSongs={loadSongs} onSetLive={setLiveSong} />;
+}
 
-        <form onSubmit={handlePinSubmit} className="flex flex-col gap-6">
-          <motion.input
-            animate={error ? { x: [-10, 10, -10, 10, 0] } : {}}
-            transition={{ duration: 0.4 }}
-            type="password"
-            maxLength={5}
-            value={pinInput}
-            onChange={(e) => setPinInput(e.target.value)}
-            placeholder="• • • • •"
-            className={cn(
-              "w-full rounded-xl border bg-black/50 p-4 text-center text-3xl tracking-[1em] text-white outline-none backdrop-blur-md transition-all placeholder:text-zinc-700",
-              error
-                ? "border-red-500/50 shadow-[0_0_15px_rgba(239,68,68,0.2)]"
-                : "border-white/10 focus:border-blue-500/50 focus:shadow-[0_0_20px_rgba(59,130,246,0.2)]",
-            )}
-          />
-          <button
-            type="submit"
-            className="w-full rounded-xl bg-blue-600/90 py-4 text-sm font-semibold tracking-widest text-white shadow-lg backdrop-blur-md transition-all hover:bg-blue-500 hover:shadow-blue-500/25 active:scale-[0.98]"
-          >
-            AUTHENTICATE
-          </button>
-        </form>
-      </motion.div>
-    </div>
-  );
-});
+function LoginScreen({ onLogin }: { onLogin: (email: string, password: string) => Promise<void> }) {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const submit = async (event: React.FormEvent) => {
+    event.preventDefault(); setError(""); setLoading(true);
+    try { await onLogin(email, password); } catch (err) { setError(err instanceof Error ? err.message : "Login failed"); }
+    setLoading(false);
+  };
+  return <div className="flex min-h-screen items-center justify-center bg-zinc-950 p-4">
+    <form onSubmit={submit} className="w-full max-w-sm rounded-3xl border border-white/10 bg-zinc-900 p-8 shadow-2xl">
+      <h1 className="text-center text-2xl font-black text-white">LOLO<span className="text-blue-500">SYNC</span></h1>
+      <p className="mb-7 mt-2 text-center text-xs tracking-widest text-zinc-400 uppercase">Admin access</p>
+      <div className="flex flex-col gap-4"><input required type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Admin email" className="rounded-xl border border-white/10 bg-black/40 p-4 text-white outline-none focus:border-blue-500" />
+        <input required type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Password" className="rounded-xl border border-white/10 bg-black/40 p-4 text-white outline-none focus:border-blue-500" />
+        {error && <p className="rounded-lg bg-red-500/10 p-3 text-sm text-red-300">{error}</p>}
+        <button disabled={loading} className="rounded-xl bg-blue-600 py-4 text-sm font-bold tracking-widest text-white disabled:opacity-50">{loading ? "AUTHENTICATING..." : "AUTHENTICATE"}</button></div>
+    </form>
+  </div>;
+}
 
-// --- ENTERPRISE ADMIN DASHBOARD ---
-const AdminPanel = React.memo(
-  ({ songs, activeSongId, status, onSelectSong }: any) => {
-    const [searchQuery, setSearchQuery] = useState("");
-    const [stagedSongId, setStagedSongId] = useState<string | null>(null);
-    const [uptime, setUptime] = useState(0);
+function AdminPanel({ songs, activeSongId, status, refreshSongs, onSetLive }: { songs: Song[]; activeSongId: string | null; status: ConnectionStatus; refreshSongs: () => Promise<void>; onSetLive: (id: string | null) => Promise<void> }) {
+  const [query, setQuery] = useState("");
+  const [stagedId, setStagedId] = useState<string | null>(null);
+  const [editing, setEditing] = useState<Song | null | "new">(null);
+  const [saving, setSaving] = useState(false);
+  const [actionError, setActionError] = useState("");
+  const filteredSongs = useMemo(() => songs.filter((song) => song.title.toLowerCase().includes(query.toLowerCase())), [songs, query]);
+  const activeSong = songs.find((song) => song.id === activeSongId);
+  const stagedSong = songs.find((song) => song.id === stagedId);
 
-    // Simulated System Uptime Timer
-    useEffect(() => {
-      if (status === "Connected") {
-        const interval = setInterval(() => setUptime((prev) => prev + 1), 1000);
-        return () => clearInterval(interval);
-      }
-    }, [status]);
+  const publish = async () => {
+    try { setActionError(""); await onSetLive(stagedId); setStagedId(null); } catch (err) { setActionError(err instanceof Error ? err.message : "Could not update live song"); }
+  };
+  const blackout = async () => { try { setActionError(""); await onSetLive(null); } catch (err) { setActionError(err instanceof Error ? err.message : "Could not clear stage"); } };
+  const removeSong = async (song: Song) => {
+    if (song.id === activeSongId) { setActionError("Blackout the stage before deleting the live song."); return; }
+    if (!window.confirm(`Delete “${song.title}”? This cannot be undone.`)) return;
+    const { error } = await supabase.from("songs").delete().eq("id", Number(song.id));
+    if (error) { setActionError(error.message); return; }
+    await refreshSongs();
+  };
+  const logout = async () => { await supabase.auth.signOut(); window.location.reload(); };
 
-    const formatUptime = (seconds: number) => {
-      const mins = Math.floor(seconds / 60);
-      const secs = seconds % 60;
-      return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
-    };
+  return <div className="min-h-screen bg-zinc-950 text-white md:flex">
+    <aside className="flex w-full flex-col border-b border-white/10 bg-zinc-900/60 p-6 md:min-h-screen md:w-80 md:border-r md:border-b-0">
+      <h1 className="text-2xl font-black">LOLO<span className="text-blue-500">SYNC</span></h1><p className="mb-8 mt-1 text-xs tracking-widest text-zinc-500 uppercase">Production console</p>
+      <div className="space-y-3"><StatusCard icon={<Radio size={16} />} label="Realtime Status" value={status} ok={status === "Connected"} /><StatusCard icon={<Activity size={16} />} label="Songs" value={String(songs.length)} ok /><StatusCard icon={<Clock size={16} />} label="Live on Stage" value={activeSong?.title || "Blackout"} ok={Boolean(activeSong)} /></div>
+      {actionError && <p className="mt-4 rounded-lg bg-red-500/10 p-3 text-sm text-red-300">{actionError}</p>}
+      <div className="mt-8 space-y-3 md:mt-auto"><button onClick={blackout} className="flex w-full items-center justify-center gap-2 rounded-xl border border-red-500/30 bg-red-500/10 py-3 font-bold text-red-300"><ShieldAlert size={17} />BLACKOUT STAGE</button><button onClick={logout} className="flex w-full items-center justify-center gap-2 rounded-xl bg-zinc-800 py-3 text-sm font-bold text-zinc-300"><LogOut size={17} />LOG OUT</button></div>
+    </aside>
+    <main className="flex-1 p-6 md:p-8"><div className="mb-7 grid gap-4 md:grid-cols-2"><div className="rounded-2xl border border-blue-500/30 bg-blue-500/10 p-5"><p className="text-xs font-bold tracking-widest text-blue-300 uppercase">Live on stage</p><h2 className="mt-2 truncate text-2xl font-bold">{activeSong?.title || "— STAGE BLACKOUT —"}</h2></div><div className="rounded-2xl border border-white/10 bg-white/5 p-5"><p className="text-xs font-bold tracking-widest text-zinc-400 uppercase">Next up</p><h2 className="mt-2 truncate text-xl">{stagedSong?.title || "Select a song below"}</h2>{stagedId && <button onClick={publish} className="mt-4 w-full rounded-lg bg-green-500 py-2 font-bold text-black">PUSH TO LIVE</button>}</div></div>
+      <div className="mb-6 flex flex-col gap-3 sm:flex-row"><input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search setlist..." className="flex-1 rounded-xl border border-white/10 bg-white/5 p-4 text-white outline-none focus:border-blue-500" /><button onClick={() => setEditing("new")} className="flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-3 font-bold"><Plus size={18} />ADD SONG</button></div>
+      {filteredSongs.length === 0 ? <div className="py-16 text-center text-zinc-500"><AlertCircle className="mx-auto mb-3" />No songs found.</div> : <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">{filteredSongs.map((song) => <div key={song.id} className={cn("rounded-xl border p-4", song.id === activeSongId ? "border-blue-500 bg-blue-500/10" : "border-white/10 bg-white/[0.03]")}><button onClick={() => setStagedId(song.id)} className="w-full text-left"><p className="text-xs text-zinc-500">ID: {song.id.padStart(3, "0")}</p><p className="mt-1 truncate text-lg font-semibold">{song.title}</p><p className="mt-2 text-xs font-bold text-zinc-400">{song.id === activeSongId ? "LIVE" : song.id === stagedId ? "STAGED" : "READY"}</p></button><div className="mt-4 flex gap-2"><button onClick={() => setEditing(song)} className="rounded-lg bg-zinc-800 px-3 py-2 text-xs font-bold">EDIT</button><button onClick={() => removeSong(song)} className="rounded-lg bg-red-500/10 px-3 py-2 text-xs font-bold text-red-300">DELETE</button></div></div>)}</div>}
+    </main>
+    <AnimatePresence>{editing && <SongModal song={editing === "new" ? null : editing} nextOrder={songs.length + 1} saving={saving} onClose={() => setEditing(null)} onSave={async (payload) => { setSaving(true); try { if (editing === "new") { const { error } = await supabase.from("songs").insert(payload); if (error) throw error; } else { const { error } = await supabase.from("songs").update(payload).eq("id", Number(editing.id)); if (error) throw error; } await refreshSongs(); setEditing(null); } catch (err) { setActionError(err instanceof Error ? err.message : "Could not save song"); } setSaving(false); }} />}</AnimatePresence>
+  </div>;
+}
 
-    const filteredSongs = songs.filter((song: Song) =>
-      song.title.toLowerCase().includes(searchQuery.toLowerCase()),
-    );
+function StatusCard({ icon, label, value, ok }: { icon: React.ReactNode; label: string; value: string; ok: boolean }) { return <div className="flex items-center justify-between rounded-xl border border-white/5 bg-black/30 p-4"><span className="flex items-center gap-2 text-sm text-zinc-400">{icon}{label}</span><span className={cn("max-w-28 truncate text-sm font-semibold", ok ? "text-green-400" : "text-zinc-400")}>{value}</span></div>; }
 
-    const activeSongData = songs.find((s: Song) => s.id === activeSongId);
-    const stagedSongData = songs.find((s: Song) => s.id === stagedSongId);
+function SongModal({ song, nextOrder, saving, onClose, onSave }: { song: Song | null; nextOrder: number; saving: boolean; onClose: () => void; onSave: (data: { title: string; lyrics: string; color: string; sort_order: number }) => Promise<void> }) {
+  const [title, setTitle] = useState(song?.title || ""); const [lyrics, setLyrics] = useState(song?.lyrics.join("\n") || ""); const [color, setColor] = useState(song?.color || DEFAULT_COLOR);
+  const submit = async (event: React.FormEvent) => { event.preventDefault(); if (!title.trim() || !lyrics.trim()) return; await onSave({ title: title.trim(), lyrics: lyrics.trim(), color: color.trim() || DEFAULT_COLOR, sort_order: song?.sortOrder || nextOrder }); };
+  return <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4"><motion.form initial={{ y: 20 }} animate={{ y: 0 }} onSubmit={submit} className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl border border-white/10 bg-zinc-900 p-6 shadow-2xl"><div className="mb-5 flex items-center justify-between"><h2 className="text-xl font-bold">{song ? "Edit Song" : "Add New Song"}</h2><button type="button" onClick={onClose}><X /></button></div><div className="flex flex-col gap-4"><label className="text-sm text-zinc-300">Song title<input required value={title} onChange={(e) => setTitle(e.target.value)} className="mt-2 w-full rounded-xl border border-white/10 bg-black/40 p-3 text-white outline-none focus:border-blue-500" /></label><label className="text-sm text-zinc-300">Lyrics — one line per row<textarea required rows={14} value={lyrics} onChange={(e) => setLyrics(e.target.value)} className="mt-2 w-full resize-y rounded-xl border border-white/10 bg-black/40 p-3 text-white outline-none focus:border-blue-500" /></label><label className="text-sm text-zinc-300">Background gradient classes<input value={color} onChange={(e) => setColor(e.target.value)} className="mt-2 w-full rounded-xl border border-white/10 bg-black/40 p-3 font-mono text-sm text-white outline-none focus:border-blue-500" /></label><button disabled={saving} className="rounded-xl bg-green-500 py-3 font-bold text-black disabled:opacity-50">{saving ? "SAVING..." : "SAVE SONG"}</button></div></motion.form></motion.div>;
+}
 
-    const handleGoLive = () => {
-      if (stagedSongId) {
-        onSelectSong(stagedSongId);
-        setStagedSongId(null);
-      }
-    };
-
-    return (
-      <div className="flex h-screen w-full flex-col bg-zinc-950 font-sans text-white md:flex-row">
-        {/* LEFT SIDEBAR: System Status & Controls */}
-        <div className="flex w-full flex-col border-r border-white/10 bg-zinc-900/50 p-6 backdrop-blur-xl md:w-80 shrink-0">
-          <div className="mb-8">
-            <h1 className="text-2xl font-black tracking-tighter text-white">
-              LOLO<span className="text-blue-500">SYNC</span>
-            </h1>
-            <p className="text-xs font-medium tracking-widest text-zinc-500 uppercase mt-1">
-              Production Console
-            </p>
-          </div>
-
-          {/* Status Metrics */}
-          <div className="mb-8 space-y-3">
-            <div className="flex items-center justify-between rounded-xl bg-black/40 p-4 border border-white/5">
-              <div className="flex items-center gap-3 text-sm text-zinc-400">
-                <Radio
-                  size={16}
-                  className={
-                    status === "Connected" ? "text-green-400" : "text-red-400"
-                  }
-                />
-                Broker Status
-              </div>
-              <span
-                className={cn(
-                  "text-sm font-semibold",
-                  status === "Connected" ? "text-green-400" : "text-red-400",
-                )}
-              >
-                {status}
-              </span>
-            </div>
-
-            <div className="flex items-center justify-between rounded-xl bg-black/40 p-4 border border-white/5">
-              <div className="flex items-center gap-3 text-sm text-zinc-400">
-                <Activity size={16} className="text-blue-400" />
-                Ping
-              </div>
-              <span className="text-sm font-semibold text-blue-400">~24ms</span>
-            </div>
-
-            <div className="flex items-center justify-between rounded-xl bg-black/40 p-4 border border-white/5">
-              <div className="flex items-center gap-3 text-sm text-zinc-400">
-                <Clock size={16} className="text-yellow-400" />
-                Session Uptime
-              </div>
-              <span className="text-sm font-mono text-yellow-400">
-                {formatUptime(uptime)}
-              </span>
-            </div>
-          </div>
-
-          {/* Global Action Buttons */}
-          <div className="mt-auto space-y-3">
-            <button
-              onClick={() => onSelectSong(null)}
-              className="flex w-full items-center justify-center gap-2 rounded-xl border border-red-500/30 bg-red-500/10 py-4 text-sm font-bold tracking-widest text-red-400 uppercase transition-all hover:bg-red-500/20 active:scale-95"
-            >
-              <ShieldAlert size={18} />
-              Blackout Stage
-            </button>
-            <button
-              onClick={() => window.location.reload()}
-              className="flex w-full items-center justify-center gap-2 rounded-xl bg-zinc-800 py-4 text-sm font-bold tracking-widest text-zinc-400 uppercase transition-all hover:bg-zinc-700 active:scale-95"
-            >
-              <Power size={18} />
-              System Reset
-            </button>
-          </div>
-        </div>
-
-        {/* RIGHT MAIN AREA: Setlist & Staging */}
-        <div className="flex h-screen flex-1 flex-col overflow-y-auto bg-black/90 p-6 md:overflow-hidden md:p-8">
-          {/* Top Bar: Now Playing vs Staged */}
-          <div className="mb-8 grid grid-cols-1 gap-4 md:grid-cols-2 shrink-0">
-            {/* Currently Live */}
-            <div className="rounded-2xl border border-blue-500/30 bg-blue-900/10 p-5 backdrop-blur-md relative overflow-hidden">
-              <div className="absolute top-0 left-0 w-1 h-full bg-blue-500" />
-              <div className="flex justify-between items-start mb-2">
-                <p className="text-xs font-bold tracking-widest text-blue-400 uppercase flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
-                  Live on Stage
-                </p>
-              </div>
-              <h2 className="text-2xl font-bold text-white truncate">
-                {activeSongData ? activeSongData.title : "— STAGE BLACKOUT —"}
-              </h2>
-            </div>
-
-            {/* Staged (Next Up) */}
-            <div className="rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur-md flex flex-col justify-between">
-              <div>
-                <p className="text-xs font-bold tracking-widest text-zinc-400 uppercase mb-2">
-                  Next Up (Staged)
-                </p>
-                <h2 className="text-xl font-medium text-zinc-300 truncate">
-                  {stagedSongData
-                    ? stagedSongData.title
-                    : "Select a song below..."}
-                </h2>
-              </div>
-              {stagedSongId && (
-                <button
-                  onClick={handleGoLive}
-                  className="mt-4 w-full rounded-lg bg-green-500 py-2 text-sm font-bold text-black uppercase tracking-widest hover:bg-green-400 active:scale-95 transition-all"
-                >
-                  PUSH TO LIVE
-                </button>
-              )}
-            </div>
-          </div>
-
-          {/* Search Bar */}
-          <div className="relative mb-6 shrink-0">
-            <Search
-              className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500"
-              size={20}
-            />
-            <input
-              type="text"
-              placeholder="Search Setlist..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full rounded-xl border border-white/10 bg-white/5 py-4 pl-12 pr-4 text-white placeholder-zinc-500 outline-none focus:border-blue-500/50 focus:bg-white/10 transition-all"
-            />
-          </div>
-
-          {/* Setlist Grid (Scrollable) */}
-          <div className="flex-1 overflow-y-auto no-scrollbar mask-image-scroller pb-20">
-            {filteredSongs.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-40 text-zinc-500 gap-2">
-                <AlertCircle size={32} />
-                <p>No songs found matching "{searchQuery}"</p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 gap-3 py-2 lg:grid-cols-2 xl:grid-cols-3">
-                <AnimatePresence>
-                  {filteredSongs.map((song: Song) => {
-                    const isLive = activeSongId === song.id;
-                    const isStaged = stagedSongId === song.id;
-
-                    return (
-                      <motion.button
-                        layout
-                        initial={{ opacity: 0, scale: 0.95 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        key={song.id}
-                        onClick={() => setStagedSongId(song.id)}
-                        className={cn(
-                          "relative flex flex-col items-start justify-center overflow-hidden rounded-xl border p-5 text-left transition-all duration-200",
-                          isLive
-                            ? "border-blue-500 bg-blue-600/20 shadow-[0_0_20px_rgba(37,99,235,0.2)]"
-                            : isStaged
-                              ? "border-green-500/50 bg-green-500/10"
-                              : "border-white/5 bg-white/[0.02] hover:bg-white/[0.06] hover:border-white/20",
-                        )}
-                      >
-                        <span className="text-xs font-mono text-zinc-500 mb-1">
-                          ID: {song.id.padStart(3, "0")}
-                        </span>
-                        <span
-                          className={cn(
-                            "text-lg font-semibold truncate w-full",
-                            isLive
-                              ? "text-white"
-                              : isStaged
-                                ? "text-green-300"
-                                : "text-zinc-300",
-                          )}
-                        >
-                          {song.title}
-                        </span>
-
-                        {/* Status Badges */}
-                        <div className="absolute top-4 right-4 flex gap-2">
-                          {isStaged && (
-                            <span className="rounded bg-green-500/20 px-2 py-1 text-[10px] font-bold text-green-400">
-                              STAGED
-                            </span>
-                          )}
-                          {isLive && (
-                            <span className="rounded bg-blue-500 px-2 py-1 text-[10px] font-bold text-white shadow-[0_0_10px_rgba(59,130,246,0.8)]">
-                              LIVE
-                            </span>
-                          )}
-                        </div>
-                      </motion.button>
-                    );
-                  })}
-                </AnimatePresence>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-    );
-  },
-);
-
-// --- AUDIENCE VIEW (ANIMATED LYRICS) ---
-const AudienceView = React.memo(({ song }: { song: Song | null }) => {
-  return (
-    <AnimatePresence mode="wait">
-      {!song ? (
-        <motion.div
-          key="idle"
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0, scale: 1.05 }}
-          transition={{ duration: 0.8, ease: "easeInOut" }}
-          className="flex h-screen w-full flex-col items-center justify-center bg-black p-8 text-center"
-        >
-          <motion.div
-            animate={{ rotate: 360 }}
-            transition={{ repeat: Infinity, duration: 8, ease: "linear" }}
-            className="mb-8 h-24 w-24 rounded-full border border-white/5 border-t-white/30 bg-white/5 backdrop-blur-xl shadow-[0_0_50px_rgba(255,255,255,0.05)]"
-          />
-          <h2 className="text-xs font-medium tracking-[0.3em] text-zinc-500 uppercase">
-            Awaiting Signal
-          </h2>
-        </motion.div>
-      ) : (
-        <motion.div
-          key={song.id}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 1 }}
-          className={cn(
-            "relative h-screen w-full overflow-hidden bg-gradient-to-br",
-            song.color,
-          )}
-        >
-          {/* Ambient Overlays */}
-          <div className="absolute inset-0 bg-black/40 pointer-events-none z-0 mix-blend-multiply" />
-          <div className="absolute inset-0 opacity-20 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] pointer-events-none z-0 mix-blend-overlay" />
-
-          {/* Scrolling Content Container */}
-          <div className="relative z-10 h-full w-full overflow-y-auto no-scrollbar mask-image-scroller">
-            <div className="flex min-h-full flex-col p-6 pb-32 md:p-16 md:pb-64">
-              <motion.div
-                initial={{ y: 30, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.2, duration: 0.8, ease: "easeOut" }}
-                className="mb-16 mt-12 md:mt-24"
-              >
-                <h1 className="text-5xl font-black leading-tight text-white drop-shadow-2xl md:text-8xl">
-                  {song.title}
-                </h1>
-                <div className="mt-6 h-1 w-24 bg-white/30 rounded-full" />
-              </motion.div>
-
-              {/* Staggered Lyrics */}
-              <motion.div
-                initial="hidden"
-                animate="show"
-                variants={{
-                  hidden: { opacity: 0 },
-                  // ADD opacity: 1 right here 👇
-                  show: { opacity: 1, transition: { staggerChildren: 0.15 } },
-                }}
-                className="max-w-4xl space-y-8 md:space-y-12"
-              >
-                {song.lyrics.map((line, i) => (
-                  <motion.p
-                    key={i}
-                    variants={{
-                      hidden: { opacity: 0, y: 20, filter: "blur(10px)" },
-                      show: {
-                        opacity: 1,
-                        y: 0,
-                        filter: "blur(0px)",
-                        transition: { duration: 0.8, ease: "easeOut" },
-                      },
-                    }}
-                    className="text-2xl font-medium leading-tight text-white/95 drop-shadow-xl md:text-5xl md:leading-snug"
-                  >
-                    {line}
-                  </motion.p>
-                ))}
-              </motion.div>
-            </div>
-
-            {/* Footer Signature */}
-            <div className="bottom-6 left-0 right-0 flex justify-center pointer-events-none mb-14">
-              <p className="text-[10px] font-semibold tracking-widest text-white/30 uppercase backdrop-blur-md bg-black/20 px-4 py-2 rounded-full">
-                @ SRKR LOLO
-              </p>
-            </div>
-          </div>
-        </motion.div>
-      )}
-    </AnimatePresence>
-  );
-});
+function AudienceView({ song }: { song: Song | null }) { return <AnimatePresence mode="wait">{!song ? <motion.div key="idle" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex min-h-screen flex-col items-center justify-center bg-black p-8 text-center"><motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 8, ease: "linear" }} className="mb-8 h-24 w-24 rounded-full border border-white/10 border-t-white/60" /><h2 className="text-xs font-medium tracking-[0.3em] text-zinc-500 uppercase">Awaiting Signal</h2></motion.div> : <motion.div key={song.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className={cn("min-h-screen bg-gradient-to-br", song.color)}><div className="min-h-screen bg-black/40 p-6 md:p-16"><h1 className="mb-16 mt-12 text-5xl font-black text-white md:text-8xl">{song.title}</h1><div className="max-w-4xl space-y-8 md:space-y-12">{song.lyrics.map((line, index) => <motion.p key={`${line}-${index}`} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: Math.min(index * 0.04, 1) }} className="text-2xl font-medium leading-tight text-white md:text-5xl md:leading-snug">{line || " "}</motion.p>)}</div><p className="mt-20 text-center text-xs tracking-widest text-white/40">@ SRKR LOLO</p></div></motion.div>}</AnimatePresence>; }
