@@ -286,7 +286,7 @@ const AdminPanel = React.memo(
         </div>
 
         {/* RIGHT MAIN AREA: Setlist & Staging */}
-        <div className="flex flex-1 flex-col bg-black/90 p-6 md:p-8 h-screen overflow-hidden">
+        <div className="flex h-screen flex-1 flex-col overflow-y-auto bg-black/90 p-6 md:overflow-hidden md:p-8">
           {/* Top Bar: Now Playing vs Staged */}
           <div className="mb-8 grid grid-cols-1 gap-4 md:grid-cols-2 shrink-0">
             {/* Currently Live */}
@@ -349,7 +349,7 @@ const AdminPanel = React.memo(
                 <p>No songs found matching "{searchQuery}"</p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 gap-3 py-2 lg:grid-cols-2 xl:grid-cols-3">
                 <AnimatePresence>
                   {filteredSongs.map((song: Song) => {
                     const isLive = activeSongId === song.id;
