@@ -10,9 +10,27 @@ import {
   Radio,
   ShieldAlert,
   X,
+  GripVertical,
 } from "lucide-react";
 import { clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
+import type { DragEndEvent } from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  rectSortingStrategy,
+  useSortable,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 
 export function cn(...inputs: (string | undefined | null | false)[]) {
   return twMerge(clsx(inputs));
@@ -196,6 +214,24 @@ export default function App() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [songs, setSongs] = useState<Song[]>([]);
 
+  // Feature 1: Played this session
+  const [playedSongIds, setPlayedSongIds] = useState<string[]>(() => {
+    const stored = sessionStorage.getItem("lolosync-played-song-ids");
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed)) return parsed;
+      } catch (_) {
+        // ignore
+      }
+    }
+    return [];
+  });
+
+  useEffect(() => {
+    sessionStorage.setItem("lolosync-played-song-ids", JSON.stringify(playedSongIds));
+  }, [playedSongIds]);
+
   const loadSongs = useCallback(async () => {
     const { data, error } = await supabase
       .from("songs")
@@ -245,6 +281,13 @@ export default function App() {
       p_song_id: songId === null ? null : Number(songId),
     });
     if (error) throw error;
+    // Only record if success and songId is not null
+    if (songId !== null) {
+      const idStr = String(songId);
+      setPlayedSongIds((prev) =>
+        prev.includes(idStr) ? prev : [...prev, idStr]
+      );
+    }
   };
 
   if (!isAdminRoute) return <AudienceView song={activeSong} />;
@@ -256,6 +299,7 @@ export default function App() {
       status={status}
       refreshSongs={loadSongs}
       onSetLive={setLiveSong}
+      playedSongIds={playedSongIds}
     />
   );
 }
@@ -326,33 +370,205 @@ function LoginScreen({
   );
 }
 
+// Sortable song tile component
+function SortableSongTile({
+  song,
+  isLive,
+  isStaged,
+  hasPlayedThisSession,
+  onStage,
+  onEdit,
+  onDelete,
+}: {
+  song: Song;
+  isLive: boolean;
+  isStaged: boolean;
+  hasPlayedThisSession: boolean;
+  onStage: (id: string) => void;
+  onEdit: (song: Song) => void;
+  onDelete: (song: Song) => void;
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: song.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+    zIndex: isDragging ? 10 : 1,
+  };
+
+  return (
+    <motion.button
+      ref={setNodeRef}
+      style={style}
+      onClick={() => onStage(song.id)}
+      className={cn(
+        "relative flex min-h-28 w-full flex-col items-start justify-center overflow-hidden rounded-xl border p-4 text-left transition-all duration-200 active:scale-[0.98] sm:min-h-32 sm:p-5",
+        isLive
+          ? "border-green-400 bg-green-950/95 shadow-[0_0_20px_rgba(74,222,128,0.28)]"
+          : isStaged
+            ? "border-blue-400 bg-blue-950/95 shadow-[0_0_20px_rgba(96,165,250,0.28)]"
+            : "border-white/5 bg-white/[0.02] hover:border-white/20 hover:bg-white/[0.06]",
+      )}
+    >
+      <div className="flex w-full items-start justify-between gap-2">
+        <div className="flex-1 min-w-0">
+          <p className="mb-1 text-xs font-mono font-semibold text-white/75">
+            ID: {song.id.padStart(3, "0")}
+          </p>
+          <p className="w-full truncate text-base font-bold text-white drop-shadow-md sm:text-lg">
+            {song.title}
+          </p>
+        </div>
+        {/* Drag handle – only this initiates drag */}
+        <button
+          type="button"
+          aria-label="Drag to reorder song"
+          className="touch-none flex-shrink-0 rounded p-2 text-white/60 transition-colors hover:text-white/90 focus:outline-none"
+          {...attributes}
+          {...listeners}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <GripVertical size={20} />
+        </button>
+      </div>
+
+      <div className="mt-1 flex flex-wrap items-center gap-2">
+        {isStaged && !isLive && (
+          <span className="rounded bg-blue-400 px-2 py-1 text-[10px] font-black tracking-wide text-blue-950 shadow-sm">
+            STAGED
+          </span>
+        )}
+        {isLive && (
+          <span className="rounded bg-green-400 px-2 py-1 text-[10px] font-black tracking-wide text-green-950 shadow-sm">
+            LIVE
+          </span>
+        )}
+        {hasPlayedThisSession && !isLive && (
+          <span className="rounded border border-amber-400/40 bg-amber-400/15 px-2 py-1 text-[10px] font-black tracking-wide text-amber-200">
+            PLAYED THIS SESSION
+          </span>
+        )}
+      </div>
+
+      <div
+        className="mt-3 flex gap-2"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <button
+          onClick={() => onEdit(song)}
+          className="rounded-lg bg-zinc-800 px-3 py-2 text-xs font-bold"
+        >
+          EDIT
+        </button>
+        <button
+          onClick={() => onDelete(song)}
+          className="rounded-lg bg-red-500/10 px-3 py-2 text-xs font-bold text-red-300"
+        >
+          DELETE
+        </button>
+      </div>
+    </motion.button>
+  );
+}
+
 function AdminPanel({
   songs,
   activeSongId,
   status,
   refreshSongs,
   onSetLive,
+  playedSongIds,
 }: {
   songs: Song[];
   activeSongId: string | null;
   status: ConnectionStatus;
   refreshSongs: () => Promise<void>;
   onSetLive: (id: string | null) => Promise<void>;
+  playedSongIds: string[];
 }) {
   const [query, setQuery] = useState("");
   const [stagedId, setStagedId] = useState<string | null>(null);
   const [editing, setEditing] = useState<Song | null | "new">(null);
   const [saving, setSaving] = useState(false);
   const [actionError, setActionError] = useState("");
+
+  // Local songs state for optimistic reordering
+  const [localSongs, setLocalSongs] = useState<Song[]>(songs);
+
+  // Sync localSongs when songs prop changes (e.g., after refresh)
+  useEffect(() => {
+    setLocalSongs(songs);
+  }, [songs]);
+
+  const activeSong = localSongs.find((song) => song.id === activeSongId);
+  const stagedSong = localSongs.find((song) => song.id === stagedId);
+
   const filteredSongs = useMemo(
     () =>
-      songs.filter((song) =>
+      localSongs.filter((song) =>
         song.title.toLowerCase().includes(query.toLowerCase()),
       ),
-    [songs, query],
+    [localSongs, query],
   );
-  const activeSong = songs.find((song) => song.id === activeSongId);
-  const stagedSong = songs.find((song) => song.id === stagedId);
+
+  // DnD sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    }),
+  );
+
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    const oldIndex = localSongs.findIndex((s) => s.id === active.id);
+    const newIndex = localSongs.findIndex((s) => s.id === over.id);
+
+    if (oldIndex === -1 || newIndex === -1) return;
+
+    // Optimistically reorder
+    const reordered = arrayMove(localSongs, oldIndex, newIndex);
+    setLocalSongs(reordered);
+
+    // Recalculate sort_order starting from 1
+    const updates: { id: string; sort_order: number }[] = reordered.map(
+      (song: Song, index: number) => ({
+        id: song.id,
+        sort_order: index + 1,
+      })
+    );
+
+    // Persist to Supabase
+    try {
+      const promises = updates.map(({ id, sort_order }: { id: string; sort_order: number }) =>
+        supabase
+          .from("songs")
+          .update({ sort_order })
+          .eq("id", Number(id))
+      );
+      await Promise.all(promises);
+      // Reload authoritative order
+      await refreshSongs();
+    } catch (err) {
+      console.error("Failed to update sort order:", err);
+      alert("Failed to save new order. Reloading saved order…");
+      await refreshSongs();
+    }
+  };
 
   const publish = async () => {
     try {
@@ -365,6 +581,7 @@ function AdminPanel({
       );
     }
   };
+
   const blackout = async () => {
     try {
       setActionError("");
@@ -375,6 +592,7 @@ function AdminPanel({
       );
     }
   };
+
   const removeSong = async (song: Song) => {
     if (song.id === activeSongId) {
       setActionError("Blackout the stage before deleting the live song.");
@@ -392,6 +610,7 @@ function AdminPanel({
     }
     await refreshSongs();
   };
+
   const logout = async () => {
     await supabase.auth.signOut();
     window.location.reload();
@@ -416,7 +635,7 @@ function AdminPanel({
           <StatusCard
             icon={<Activity size={16} />}
             label="Songs"
-            value={String(songs.length)}
+            value={String(localSongs.length)}
             ok
           />
           <StatusCard
@@ -497,69 +716,43 @@ function AdminPanel({
             No songs found.
           </div>
         ) : (
-          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-            {filteredSongs.map((song) => {
-              const isLive = activeSongId === song.id;
-              const isStaged = stagedId === song.id;
-              return (
-                <motion.button
-                  key={song.id}
-                  onClick={() => setStagedId(song.id)}
-                  className={cn(
-                    "relative flex min-h-28 w-full flex-col items-start justify-center overflow-hidden rounded-xl border p-4 text-left transition-all duration-200 active:scale-[0.98] sm:min-h-32 sm:p-5",
-                    isLive
-                      ? "border-green-400 bg-green-950/95 shadow-[0_0_20px_rgba(74,222,128,0.28)]"
-                      : isStaged
-                        ? "border-blue-400 bg-blue-950/95 shadow-[0_0_20px_rgba(96,165,250,0.28)]"
-                        : "border-white/5 bg-white/[0.02] hover:border-white/20 hover:bg-white/[0.06]",
-                  )}
-                >
-                  <p className="mb-1 text-xs font-mono font-semibold text-white/75">
-                    ID: {song.id.padStart(3, "0")}
-                  </p>
-                  <p className="w-full truncate text-base font-bold text-white drop-shadow-md sm:text-lg">
-                    {song.title}
-                  </p>
-                  <div className="mt-1 flex flex-wrap items-center gap-2">
-                    {isStaged && !isLive && (
-                      <span className="rounded bg-blue-400 px-2 py-1 text-[10px] font-black tracking-wide text-blue-950 shadow-sm">
-                        STAGED
-                      </span>
-                    )}
-                    {isLive && (
-                      <span className="rounded bg-green-400 px-2 py-1 text-[10px] font-black tracking-wide text-green-950 shadow-sm">
-                        LIVE
-                      </span>
-                    )}
-                  </div>
-                  <div
-                    className="mt-3 flex gap-2"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <button
-                      onClick={() => setEditing(song)}
-                      className="rounded-lg bg-zinc-800 px-3 py-2 text-xs font-bold"
-                    >
-                      EDIT
-                    </button>
-                    <button
-                      onClick={() => removeSong(song)}
-                      className="rounded-lg bg-red-500/10 px-3 py-2 text-xs font-bold text-red-300"
-                    >
-                      DELETE
-                    </button>
-                  </div>
-                </motion.button>
-              );
-            })}
-          </div>
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+          >
+            <SortableContext
+              items={filteredSongs.map((s) => s.id)}
+              strategy={rectSortingStrategy}
+            >
+              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                {filteredSongs.map((song) => {
+                  const isLive = activeSongId === song.id;
+                  const isStaged = stagedId === song.id;
+                  const hasPlayedThisSession = playedSongIds.includes(song.id);
+                  return (
+                    <SortableSongTile
+                      key={song.id}
+                      song={song}
+                      isLive={isLive}
+                      isStaged={isStaged}
+                      hasPlayedThisSession={hasPlayedThisSession}
+                      onStage={setStagedId}
+                      onEdit={setEditing}
+                      onDelete={removeSong}
+                    />
+                  );
+                })}
+              </div>
+            </SortableContext>
+          </DndContext>
         )}
       </main>
       <AnimatePresence>
         {editing && (
           <SongModal
             song={editing === "new" ? null : editing}
-            nextOrder={songs.length + 1}
+            nextOrder={localSongs.length + 1}
             saving={saving}
             onClose={() => setEditing(null)}
             onSave={async (payload) => {
