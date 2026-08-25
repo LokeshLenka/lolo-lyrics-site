@@ -468,7 +468,7 @@ function AdminPanel({
             {stagedId && (
               <button
                 onClick={publish}
-                className="mt-4 w-full rounded-lg bg-green-500 py-2 font-bold text-black"
+                className="mt-4 min-h-12 w-full rounded-lg bg-green-500 px-4 py-3 text-xs font-bold tracking-widest text-black uppercase transition-all hover:bg-green-400 active:scale-[0.98] sm:text-sm"
               >
                 PUSH TO LIVE
               </button>
@@ -484,10 +484,11 @@ function AdminPanel({
           />
           <button
             onClick={() => setEditing("new")}
-            className="flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-3 font-bold"
+            className="min-h-12 w-full rounded-xl bg-blue-600 px-4 py-3 text-xs font-bold tracking-wider text-white transition-all hover:bg-blue-500 active:scale-[0.98] sm:w-auto sm:px-5 sm:text-sm"
           >
-            <Plus size={18} />
-            ADD SONG
+            <Plus size={18} className="inline-block sm:mr-2" />
+            <span className="hidden sm:inline">ADD SONG</span>
+            <span className="sm:hidden">ADD</span>
           </button>
         </div>
         {filteredSongs.length === 0 ? (
@@ -497,50 +498,69 @@ function AdminPanel({
           </div>
         ) : (
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-            {filteredSongs.map((song) => (
-              <div
-                key={song.id}
-                className={cn(
-                  "rounded-xl border p-4",
-                  song.id === activeSongId
-                    ? "border-blue-500 bg-blue-500/10"
-                    : "border-white/10 bg-white/[0.03]",
-                )}
-              >
-                <button
+            {filteredSongs.map((song) => {
+              const isLive = activeSongId === song.id;
+              const isStaged = stagedId === song.id;
+              return (
+                <motion.button
+                  key={song.id}
                   onClick={() => setStagedId(song.id)}
-                  className="w-full text-left"
+                  className={cn(
+                    "relative flex min-h-28 w-full flex-col items-start justify-center overflow-hidden rounded-xl border p-4 text-left transition-all duration-200 active:scale-[0.98] sm:min-h-32 sm:p-5",
+                    isLive
+                      ? "border-green-400 bg-green-500/20 shadow-[0_0_20px_rgba(74,222,128,0.22)]"
+                      : isStaged
+                        ? "border-blue-400 bg-blue-500/20 shadow-[0_0_20px_rgba(96,165,250,0.20)]"
+                        : "border-white/5 bg-white/[0.02] hover:border-white/20 hover:bg-white/[0.06]",
+                  )}
                 >
-                  <p className="text-xs text-zinc-500">
+                  <p className="text-[10px] text-zinc-500">
                     ID: {song.id.padStart(3, "0")}
                   </p>
-                  <p className="mt-1 truncate text-lg font-semibold">
+                  <p
+                    className={cn(
+                      "w-full truncate text-base font-semibold sm:text-lg",
+                      isLive
+                        ? "text-green-200"
+                        : isStaged
+                          ? "text-blue-200"
+                          : "text-zinc-300",
+                    )}
+                  >
                     {song.title}
                   </p>
-                  <p className="mt-2 text-xs font-bold text-zinc-400">
-                    {song.id === activeSongId
-                      ? "LIVE"
-                      : song.id === stagedId
-                        ? "STAGED"
-                        : "READY"}
-                  </p>
-                </button>
-                <div className="mt-4 flex gap-2">
-                  <button
-                    onClick={() => setEditing(song)}
-                    className="rounded-lg bg-zinc-800 px-3 py-2 text-xs font-bold"
+                  <div className="mt-1 flex flex-wrap items-center gap-2">
+                    {isStaged && !isLive && (
+                      <span className="rounded bg-blue-500/25 px-2 py-1 text-[10px] font-bold text-blue-300">
+                        STAGED
+                      </span>
+                    )}
+                    {isLive && (
+                      <span className="rounded bg-green-500 px-2 py-1 text-[10px] font-bold text-black shadow-[0_0_10px_rgba(74,222,128,0.8)]">
+                        LIVE
+                      </span>
+                    )}
+                  </div>
+                  <div
+                    className="mt-3 flex gap-2"
+                    onClick={(e) => e.stopPropagation()}
                   >
-                    EDIT
-                  </button>
-                  <button
-                    onClick={() => removeSong(song)}
-                    className="rounded-lg bg-red-500/10 px-3 py-2 text-xs font-bold text-red-300"
-                  >
-                    DELETE
-                  </button>
-                </div>
-              </div>
-            ))}
+                    <button
+                      onClick={() => setEditing(song)}
+                      className="rounded-lg bg-zinc-800 px-3 py-2 text-xs font-bold"
+                    >
+                      EDIT
+                    </button>
+                    <button
+                      onClick={() => removeSong(song)}
+                      className="rounded-lg bg-red-500/10 px-3 py-2 text-xs font-bold text-red-300"
+                    >
+                      DELETE
+                    </button>
+                  </div>
+                </motion.button>
+              );
+            })}
           </div>
         )}
       </main>
