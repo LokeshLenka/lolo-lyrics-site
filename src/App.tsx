@@ -14,6 +14,26 @@ type DbSong = { id: number; title: string; lyrics: string; color: string; sort_o
 type ConnectionStatus = "Connecting" | "Connected" | "Disconnected";
 
 const DEFAULT_COLOR = "from-slate-950 via-blue-950 to-indigo-950";
+const GRADIENTS = [
+  "from-slate-950 via-blue-950 to-indigo-950",
+  "from-zinc-950 via-fuchsia-950 to-pink-950",
+  "from-gray-950 via-amber-950 to-orange-950",
+  "from-neutral-950 via-violet-950 to-purple-950",
+  "from-stone-950 via-red-950 to-rose-950",
+  "from-stone-950 via-emerald-950 to-teal-950",
+  "from-slate-950 via-cyan-950 to-blue-950",
+  "from-neutral-950 via-orange-950 to-red-950",
+  "from-zinc-950 via-purple-950 to-indigo-950",
+  "from-stone-950 via-rose-950 to-pink-950",
+  "from-gray-950 via-teal-950 to-emerald-950",
+  "from-zinc-950 via-indigo-950 to-fuchsia-950",
+  "from-slate-950 via-blue-950 to-cyan-950",
+  "from-zinc-950 via-pink-950 to-purple-950",
+];
+
+function getRandomGradient() {
+  return GRADIENTS[Math.floor(Math.random() * GRADIENTS.length)];
+}
 
 function toSong(row: DbSong): Song {
   return {
@@ -196,7 +216,9 @@ function AdminPanel({ songs, activeSongId, status, refreshSongs, onSetLive }: { 
 function StatusCard({ icon, label, value, ok }: { icon: React.ReactNode; label: string; value: string; ok: boolean }) { return <div className="flex items-center justify-between rounded-xl border border-white/5 bg-black/30 p-4"><span className="flex items-center gap-2 text-sm text-zinc-400">{icon}{label}</span><span className={cn("max-w-28 truncate text-sm font-semibold", ok ? "text-green-400" : "text-zinc-400")}>{value}</span></div>; }
 
 function SongModal({ song, nextOrder, saving, onClose, onSave }: { song: Song | null; nextOrder: number; saving: boolean; onClose: () => void; onSave: (data: { title: string; lyrics: string; color: string; sort_order: number }) => Promise<void> }) {
-  const [title, setTitle] = useState(song?.title || ""); const [lyrics, setLyrics] = useState(song?.lyrics.join("\n") || ""); const [color, setColor] = useState(song?.color || DEFAULT_COLOR);
+  const [title, setTitle] = useState(song?.title || "");
+  const [lyrics, setLyrics] = useState(song?.lyrics.join("\n") || "");
+  const [color, setColor] = useState(song?.color || getRandomGradient());
   const submit = async (event: React.FormEvent) => { event.preventDefault(); if (!title.trim() || !lyrics.trim()) return; await onSave({ title: title.trim(), lyrics: lyrics.trim(), color: color.trim() || DEFAULT_COLOR, sort_order: song?.sortOrder || nextOrder }); };
   return <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4"><motion.form initial={{ y: 20 }} animate={{ y: 0 }} onSubmit={submit} className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl border border-white/10 bg-zinc-900 p-6 shadow-2xl"><div className="mb-5 flex items-center justify-between"><h2 className="text-xl font-bold">{song ? "Edit Song" : "Add New Song"}</h2><button type="button" onClick={onClose}><X /></button></div><div className="flex flex-col gap-4"><label className="text-sm text-zinc-300">Song title<input required value={title} onChange={(e) => setTitle(e.target.value)} className="mt-2 w-full rounded-xl border border-white/10 bg-black/40 p-3 text-white outline-none focus:border-blue-500" /></label><label className="text-sm text-zinc-300">Lyrics — one line per row<textarea required rows={14} value={lyrics} onChange={(e) => setLyrics(e.target.value)} className="mt-2 w-full resize-y rounded-xl border border-white/10 bg-black/40 p-3 text-white outline-none focus:border-blue-500" /></label><label className="text-sm text-zinc-300">Background gradient classes<input value={color} onChange={(e) => setColor(e.target.value)} className="mt-2 w-full rounded-xl border border-white/10 bg-black/40 p-3 font-mono text-sm text-white outline-none focus:border-blue-500" /></label><button disabled={saving} className="rounded-xl bg-green-500 py-3 font-bold text-black disabled:opacity-50">{saving ? "SAVING..." : "SAVE SONG"}</button></div></motion.form></motion.div>;
 }
