@@ -508,35 +508,26 @@ function AdminPanel({
                   className={cn(
                     "relative flex min-h-28 w-full flex-col items-start justify-center overflow-hidden rounded-xl border p-4 text-left transition-all duration-200 active:scale-[0.98] sm:min-h-32 sm:p-5",
                     isLive
-                      ? "border-green-400 bg-green-500/20 shadow-[0_0_20px_rgba(74,222,128,0.22)]"
+                      ? "border-green-400 bg-green-950/95 shadow-[0_0_20px_rgba(74,222,128,0.28)]"
                       : isStaged
-                        ? "border-blue-400 bg-blue-500/20 shadow-[0_0_20px_rgba(96,165,250,0.20)]"
+                        ? "border-blue-400 bg-blue-950/95 shadow-[0_0_20px_rgba(96,165,250,0.28)]"
                         : "border-white/5 bg-white/[0.02] hover:border-white/20 hover:bg-white/[0.06]",
                   )}
                 >
-                  <p className="text-[10px] text-zinc-500">
+                  <p className="mb-1 text-xs font-mono font-semibold text-white/75">
                     ID: {song.id.padStart(3, "0")}
                   </p>
-                  <p
-                    className={cn(
-                      "w-full truncate text-base font-semibold sm:text-lg",
-                      isLive
-                        ? "text-green-200"
-                        : isStaged
-                          ? "text-blue-200"
-                          : "text-zinc-300",
-                    )}
-                  >
+                  <p className="w-full truncate text-base font-bold text-white drop-shadow-md sm:text-lg">
                     {song.title}
                   </p>
                   <div className="mt-1 flex flex-wrap items-center gap-2">
                     {isStaged && !isLive && (
-                      <span className="rounded bg-blue-500/25 px-2 py-1 text-[10px] font-bold text-blue-300">
+                      <span className="rounded bg-blue-400 px-2 py-1 text-[10px] font-black tracking-wide text-blue-950 shadow-sm">
                         STAGED
                       </span>
                     )}
                     {isLive && (
-                      <span className="rounded bg-green-500 px-2 py-1 text-[10px] font-bold text-black shadow-[0_0_10px_rgba(74,222,128,0.8)]">
+                      <span className="rounded bg-green-400 px-2 py-1 text-[10px] font-black tracking-wide text-green-950 shadow-sm">
                         LIVE
                       </span>
                     )}
