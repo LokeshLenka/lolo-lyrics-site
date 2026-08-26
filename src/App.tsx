@@ -12,7 +12,6 @@ import {
   Trash2,
   Search,
   Plus,
-  MoreVertical,
   ChevronDown,
   Menu,
   ShieldAlert,
@@ -887,9 +886,6 @@ function AdminPanel({
   const [showAddSongs, setShowAddSongs] = useState(false);
   const [addingSongs, setAddingSongs] = useState(false);
 
-  // Dropdown state for event actions (rename/delete)
-  const [isEventActionsOpen, setIsEventActionsOpen] = useState(false);
-
   // Dropdown state for event selector
   const [isEventSelectorOpen, setIsEventSelectorOpen] = useState(false);
 
@@ -923,7 +919,7 @@ function AdminPanel({
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
-        distance: 20, // increased from 8 to allow easier scrolling
+        distance: 20,
       },
     }),
     useSensor(KeyboardSensor, {
@@ -1166,7 +1162,7 @@ function AdminPanel({
   return (
     <div className="min-h-screen bg-zinc-950 text-white md:flex">
       {/* Sidebar */}
-      <aside className="flex w-full flex-col border-b border-white/10 bg-zinc-900/60 md:min-h-screen md:w-80 md:border-r md:border-b-0">
+      <aside className="flex w-full flex-col border-b border-white/10 bg-zinc-900/60 md:min-h-screen md:w-80 md:border-r md:border-b-0 sticky top-0 max-h-screen overflow-y-auto">
         {/* Sticky header with logo and logout */}
         <div className="sticky top-0 z-20 bg-zinc-900/80 backdrop-blur-sm border-b border-white/10 p-4">
           <div className="flex items-center justify-between">
@@ -1362,8 +1358,8 @@ function AdminPanel({
 
             {/* Main Event Content */}
             <div className="flex-1 min-w-0">
-              {/* Header: toggle button + selector + actions */}
-              <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+              {/* Header: toggle + selector (no actions dropdown) */}
+              <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
                 <button
                   type="button"
                   aria-label="Toggle event list"
@@ -1408,71 +1404,31 @@ function AdminPanel({
                     </div>
                   )}
                 </div>
-
-                <div className="flex items-center gap-1.5">
-                  {selectedEventId && (
-                    <button
-                      onClick={() => setShowAddSongs(true)}
-                      className="rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-bold text-white whitespace-nowrap"
-                    >
-                      + ADD SONGS
-                    </button>
-                  )}
-                  {selectedEventId && (
-                    <div className="relative">
-                      <button
-                        type="button"
-                        aria-label="Event actions"
-                        title="Event actions"
-                        onClick={() => setIsEventActionsOpen(!isEventActionsOpen)}
-                        className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/10 bg-zinc-800 text-zinc-200 transition-colors hover:bg-zinc-700 active:scale-95"
-                      >
-                        <MoreVertical size={17} />
-                      </button>
-                      {isEventActionsOpen && (
-                        <div className="absolute right-0 top-full z-30 mt-1 w-40 overflow-hidden rounded-xl border border-white/10 bg-zinc-900 p-1 shadow-2xl">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setIsEventActionsOpen(false);
-                              const ev = events.find(e => e.id === selectedEventId);
-                              if (ev) setEditingEvent(ev);
-                            }}
-                            className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-zinc-200 hover:bg-zinc-800"
-                          >
-                            <Pencil size={14} />
-                            Rename Event
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setIsEventActionsOpen(false);
-                              deleteEvent();
-                            }}
-                            className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-red-400 hover:bg-red-500/10"
-                          >
-                            <Trash2 size={14} />
-                            Delete Event
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
               </div>
+
+              {/* Search and Add Songs row */}
+              {selectedEventId && (
+                <div className="mb-4 flex items-center gap-2">
+                  <input
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    placeholder="Search event setlist..."
+                    className="flex-1 rounded-xl border border-white/10 bg-white/5 p-3 text-white outline-none focus:border-blue-500"
+                  />
+                  <button
+                    onClick={() => setShowAddSongs(true)}
+                    className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-white transition-colors hover:bg-blue-500 active:scale-95"
+                    aria-label="Add songs from library"
+                    title="Add songs from library"
+                  >
+                    <Plus size={20} />
+                  </button>
+                </div>
+              )}
 
               {/* Setlist content */}
               {selectedEventId ? (
                 <>
-                  <div className="mb-4">
-                    <input
-                      value={query}
-                      onChange={(e) => setQuery(e.target.value)}
-                      placeholder="Search event setlist..."
-                      className="w-full rounded-xl border border-white/10 bg-white/5 p-4 text-white outline-none focus:border-blue-500"
-                    />
-                  </div>
-
                   {filteredSongs.length === 0 ? (
                     <div className="py-16 text-center text-zinc-500">
                       <AlertCircle className="mx-auto mb-3" />
