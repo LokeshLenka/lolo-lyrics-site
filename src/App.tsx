@@ -6,11 +6,13 @@ import {
   AlertCircle,
   Clock,
   LogOut,
-  Plus,
   Radio,
   ShieldAlert,
   X,
   GripVertical,
+  Pencil,
+  Trash2,
+  Search,
 } from "lucide-react";
 import { clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
@@ -50,7 +52,31 @@ type DbSong = {
   color: string;
   sort_order: number | null;
 };
+type DbEvent = {
+  id: number;
+  name: string;
+  created_at: string;
+};
+type Event = {
+  id: string;
+  name: string;
+  createdAt: string;
+};
+type DbEventSong = {
+  event_id: number;
+  song_id: number;
+  sort_order: number;
+  songs: DbSong | null;
+};
 type ConnectionStatus = "Connecting" | "Connected" | "Disconnected";
+
+function toEvent(row: DbEvent): Event {
+  return {
+    id: String(row.id),
+    name: row.name,
+    createdAt: row.created_at,
+  };
+}
 
 const GRADIENTS = [
   {
@@ -121,7 +147,6 @@ function getGradientCss(color: string) {
 
 function getRandomGradient(): string {
   const gradient = GRADIENTS[Math.floor(Math.random() * GRADIENTS.length)];
-
   return typeof gradient === "string" ? gradient : gradient.id;
 }
 
@@ -213,8 +238,11 @@ export default function App() {
   const { activeSong, activeSongId, status } = useLiveSong();
   const [isAdmin, setIsAdmin] = useState(false);
   const [songs, setSongs] = useState<Song[]>([]);
+  const [events, setEvents] = useState<Event[]>([]);
+  const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
+  const [eventSongs, setEventSongs] = useState<Song[]>([]);
 
-  // Feature 1: Played this session
+  // Played this session
   const [playedSongIds, setPlayedSongIds] = useState<string[]>(() => {
     const stored = sessionStorage.getItem("lolosync-played-song-ids");
     if (stored) {
@@ -241,6 +269,56 @@ export default function App() {
     setSongs((data as DbSong[]).map(toSong));
   }, []);
 
+  const loadEvents = useCallback(async () => {
+    const { data, error } = await supabase
+      .from("events")
+      .select("id, name, created_at")
+      .order("created_at", { ascending: false });
+    if (error) throw error;
+    setEvents((data as DbEvent[]).map(toEvent));
+  }, []);
+
+  const loadEventSongs = useCallback(async (eventId: string) => {
+    const { data, error } = await supabase
+      .from("event_songs")
+      .select(`
+        event_id,
+        song_id,
+        sort_order,
+        songs (
+          id,
+          title,
+          lyrics,
+          color,
+          sort_order
+        )
+      `)
+      .eq("event_id", Number(eventId))
+      .order("sort_order", { ascending: true });
+
+    if (error) throw error;
+
+    const rows = data as unknown as DbEventSong[];
+    const fetched = rows
+      .filter((row) => row.songs !== null)
+      .map((row) => {
+        const song = toSong(row.songs as DbSong);
+        return {
+          ...song,
+          sortOrder: row.sort_order,
+        };
+      });
+    setEventSongs(fetched);
+  }, []);
+
+  useEffect(() => {
+    if (selectedEventId === null) {
+      setEventSongs([]);
+    } else {
+      loadEventSongs(selectedEventId).catch(console.error);
+    }
+  }, [selectedEventId, loadEventSongs]);
+
   const verifySession = useCallback(async () => {
     const {
       data: { user },
@@ -260,8 +338,8 @@ export default function App() {
       return;
     }
     setIsAdmin(true);
-    await loadSongs();
-  }, [loadSongs]);
+    await Promise.all([loadSongs(), loadEvents()]);
+  }, [loadSongs, loadEvents]);
 
   useEffect(() => {
     if (isAdminRoute) void verifySession();
@@ -281,7 +359,6 @@ export default function App() {
       p_song_id: songId === null ? null : Number(songId),
     });
     if (error) throw error;
-    // Only record if success and songId is not null
     if (songId !== null) {
       const idStr = String(songId);
       setPlayedSongIds((prev) =>
@@ -300,6 +377,12 @@ export default function App() {
       refreshSongs={loadSongs}
       onSetLive={setLiveSong}
       playedSongIds={playedSongIds}
+      events={events}
+      selectedEventId={selectedEventId}
+      eventSongs={eventSongs}
+      refreshEvents={loadEvents}
+      refreshEventSongs={loadEventSongs}
+      onSelectEvent={setSelectedEventId}
     />
   );
 }
@@ -370,7 +453,7 @@ function LoginScreen({
   );
 }
 
-// Sortable song tile component
+// Sortable song tile component – now using div outer, with clickable content for staging
 function SortableSongTile({
   song,
   isLive,
@@ -379,6 +462,9 @@ function SortableSongTile({
   onStage,
   onEdit,
   onDelete,
+  onRemoveFromEvent,
+  showRemoveFromEvent = false,
+  isEventTab = false,
 }: {
   song: Song;
   isLive: boolean;
@@ -386,7 +472,10 @@ function SortableSongTile({
   hasPlayedThisSession: boolean;
   onStage: (id: string) => void;
   onEdit: (song: Song) => void;
-  onDelete: (song: Song) => void;
+  onDelete?: (song: Song) => void;
+  onRemoveFromEvent?: (song: Song) => void;
+  showRemoveFromEvent?: boolean;
+  isEventTab?: boolean;
 }) {
   const {
     attributes,
@@ -404,11 +493,16 @@ function SortableSongTile({
     zIndex: isDragging ? 10 : 1,
   };
 
+  const handleStageClick = () => {
+    if (isEventTab) {
+      onStage(song.id);
+    }
+  };
+
   return (
-    <motion.button
+    <motion.div
       ref={setNodeRef}
       style={style}
-      onClick={() => onStage(song.id)}
       className={cn(
         "relative flex min-h-28 w-full flex-col items-start justify-center overflow-hidden rounded-xl border p-4 text-left transition-all duration-200 active:scale-[0.98] sm:min-h-32 sm:p-5",
         isLive
@@ -416,7 +510,9 @@ function SortableSongTile({
           : isStaged
             ? "border-blue-400 bg-blue-950/95 shadow-[0_0_20px_rgba(96,165,250,0.28)]"
             : "border-white/5 bg-white/[0.02] hover:border-white/20 hover:bg-white/[0.06]",
+        isEventTab ? "cursor-pointer" : "",
       )}
+      onClick={isEventTab ? handleStageClick : undefined}
     >
       <div className="flex w-full items-start justify-between gap-2">
         <div className="flex-1 min-w-0">
@@ -468,14 +564,273 @@ function SortableSongTile({
         >
           EDIT
         </button>
-        <button
-          onClick={() => onDelete(song)}
-          className="rounded-lg bg-red-500/10 px-3 py-2 text-xs font-bold text-red-300"
-        >
-          DELETE
-        </button>
+        {showRemoveFromEvent && onRemoveFromEvent ? (
+          <button
+            onClick={() => onRemoveFromEvent(song)}
+            className="rounded-lg bg-red-500/10 px-3 py-2 text-xs font-bold text-red-300"
+          >
+            REMOVE FROM EVENT
+          </button>
+        ) : (
+          onDelete && (
+            <button
+              onClick={() => onDelete(song)}
+              className="rounded-lg bg-red-500/10 px-3 py-2 text-xs font-bold text-red-300"
+            >
+              DELETE
+            </button>
+          )
+        )}
       </div>
-    </motion.button>
+    </motion.div>
+  );
+}
+
+// Event modal for create/rename
+function EventModal({
+  isOpen,
+  onClose,
+  onSave,
+  initialName = "",
+  title = "Create Event",
+  saveLabel = "Create",
+  saving = false,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  onSave: (name: string) => Promise<void>;
+  initialName?: string;
+  title?: string;
+  saveLabel?: string;
+  saving?: boolean;
+}) {
+  const [name, setName] = useState(initialName);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (isOpen) {
+      setName(initialName);
+      setError("");
+    }
+  }, [isOpen, initialName]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const trimmed = name.trim();
+    if (!trimmed) {
+      setError("Event name is required");
+      return;
+    }
+    setError("");
+    try {
+      await onSave(trimmed);
+      onClose();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to save event");
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4"
+    >
+      <motion.form
+        initial={{ y: 20 }}
+        animate={{ y: 0 }}
+        onSubmit={handleSubmit}
+        className="w-full max-w-md rounded-2xl border border-white/10 bg-zinc-900 p-6 shadow-2xl"
+      >
+        <div className="mb-5 flex items-center justify-between">
+          <h2 className="text-xl font-bold text-white">{title}</h2>
+          <button type="button" onClick={onClose} className="text-white/60 hover:text-white">
+            <X size={24} />
+          </button>
+        </div>
+        <div className="flex flex-col gap-4">
+          <label className="text-sm text-zinc-300">
+            Event Name
+            <input
+              required
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="e.g. Sunday Service"
+              className="mt-2 w-full rounded-xl border border-white/10 bg-black/40 p-3 text-white outline-none focus:border-blue-500"
+            />
+          </label>
+          {error && (
+            <p className="rounded-lg bg-red-500/10 p-3 text-sm text-red-300">
+              {error}
+            </p>
+          )}
+          <button
+            type="submit"
+            disabled={saving}
+            className="rounded-xl bg-blue-600 py-3 font-bold text-white disabled:opacity-50"
+          >
+            {saving ? "SAVING..." : saveLabel}
+          </button>
+        </div>
+      </motion.form>
+    </motion.div>
+  );
+}
+
+// Add songs from library modal
+function AddSongsToEventModal({
+  isOpen,
+  onClose,
+  librarySongs,
+  eventSongs,
+  onAdd,
+  saving = false,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  librarySongs: Song[];
+  eventSongs: Song[];
+  onAdd: (songIds: string[]) => Promise<void>;
+  saving?: boolean;
+}) {
+  const [search, setSearch] = useState("");
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (isOpen) {
+      setSelectedIds(new Set());
+      setSearch("");
+      setError("");
+    }
+  }, [isOpen]);
+
+  const alreadyAddedIds = useMemo(() => new Set(eventSongs.map(s => s.id)), [eventSongs]);
+  const filtered = useMemo(() => {
+    return librarySongs.filter(s =>
+      s.title.toLowerCase().includes(search.toLowerCase())
+    );
+  }, [librarySongs, search]);
+
+  const toggleSelect = (id: string) => {
+    if (alreadyAddedIds.has(id)) return;
+    setSelectedIds(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(id)) newSet.delete(id);
+      else newSet.add(id);
+      return newSet;
+    });
+  };
+
+  const handleSubmit = async () => {
+    if (selectedIds.size === 0) return;
+    setError("");
+    try {
+      await onAdd(Array.from(selectedIds));
+      onClose();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to add songs");
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4"
+    >
+      <motion.div
+        initial={{ y: 20 }}
+        animate={{ y: 0 }}
+        className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl border border-white/10 bg-zinc-900 p-6 shadow-2xl"
+      >
+        <div className="mb-5 flex items-center justify-between">
+          <h2 className="text-xl font-bold text-white">Add Songs from Library</h2>
+          <button type="button" onClick={onClose} className="text-white/60 hover:text-white">
+            <X size={24} />
+          </button>
+        </div>
+        <div className="mb-4">
+          <div className="relative">
+            <Search className="absolute left-3 top-3 h-4 w-4 text-zinc-400" />
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search library..."
+              className="w-full rounded-xl border border-white/10 bg-black/40 p-3 pl-10 text-white outline-none focus:border-blue-500"
+            />
+          </div>
+        </div>
+        <div className="max-h-60 overflow-y-auto space-y-2">
+          {filtered.length === 0 ? (
+            <p className="text-center text-zinc-400 py-4">No songs match</p>
+          ) : (
+            filtered.map(song => {
+              const isAdded = alreadyAddedIds.has(song.id);
+              const isSelected = selectedIds.has(song.id);
+              return (
+                <div
+                  key={song.id}
+                  className={cn(
+                    "flex items-center justify-between rounded-lg border p-3",
+                    isAdded
+                      ? "border-green-500/30 bg-green-500/10"
+                      : isSelected
+                        ? "border-blue-500/30 bg-blue-500/10"
+                        : "border-white/5 bg-white/[0.02]"
+                  )}
+                >
+                  <span className="text-white">{song.title}</span>
+                  <button
+                    type="button"
+                    onClick={() => toggleSelect(song.id)}
+                    disabled={isAdded}
+                    className={cn(
+                      "rounded px-3 py-1 text-xs font-bold",
+                      isAdded
+                        ? "bg-green-500/20 text-green-300 cursor-default"
+                        : isSelected
+                          ? "bg-blue-500 text-white"
+                          : "bg-zinc-700 text-zinc-300 hover:bg-zinc-600"
+                    )}
+                  >
+                    {isAdded ? "ADDED" : isSelected ? "SELECTED" : "SELECT"}
+                  </button>
+                </div>
+              );
+            })
+          )}
+        </div>
+        {error && (
+          <p className="mt-3 rounded-lg bg-red-500/10 p-3 text-sm text-red-300">
+            {error}
+          </p>
+        )}
+        <div className="mt-5 flex gap-3">
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex-1 rounded-xl border border-white/10 py-3 text-white"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={handleSubmit}
+            disabled={saving || selectedIds.size === 0}
+            className="flex-1 rounded-xl bg-blue-600 py-3 font-bold text-white disabled:opacity-50"
+          >
+            {saving ? "ADDING..." : `ADD SELECTED (${selectedIds.size})`}
+          </button>
+        </div>
+      </motion.div>
+    </motion.div>
   );
 }
 
@@ -486,6 +841,12 @@ function AdminPanel({
   refreshSongs,
   onSetLive,
   playedSongIds,
+  events,
+  selectedEventId,
+  eventSongs,
+  refreshEvents,
+  refreshEventSongs,
+  onSelectEvent,
 }: {
   songs: Song[];
   activeSongId: string | null;
@@ -493,92 +854,136 @@ function AdminPanel({
   refreshSongs: () => Promise<void>;
   onSetLive: (id: string | null) => Promise<void>;
   playedSongIds: string[];
+  events: Event[];
+  selectedEventId: string | null;
+  eventSongs: Song[];
+  refreshEvents: () => Promise<void>;
+  refreshEventSongs: (eventId: string) => Promise<void>;
+  onSelectEvent: (id: string | null) => void;
 }) {
-  const [query, setQuery] = useState("");
+  // Tabs
+  const [activeTab, setActiveTab] = useState<"events" | "library">("events");
+
+  // Event modal state
+  const [showCreateEvent, setShowCreateEvent] = useState(false);
+  const [editingEvent, setEditingEvent] = useState<Event | null>(null);
+  const [savingEvent, setSavingEvent] = useState(false);
+
+  // Add songs modal
+  const [showAddSongs, setShowAddSongs] = useState(false);
+  const [addingSongs, setAddingSongs] = useState(false);
+
+  // Local state for event songs (optimistic reorder)
+  const [localEventSongs, setLocalEventSongs] = useState<Song[]>(eventSongs);
+
+  // Keep localEventSongs in sync with prop
+  useEffect(() => {
+    setLocalEventSongs(eventSongs);
+  }, [eventSongs]);
+
+  // Local state for library songs (optimistic reorder)
+  const [localLibrarySongs, setLocalLibrarySongs] = useState<Song[]>(songs);
+  useEffect(() => {
+    setLocalLibrarySongs(songs);
+  }, [songs]);
+
+  // Staged id
   const [stagedId, setStagedId] = useState<string | null>(null);
+
+  // Editing song
   const [editing, setEditing] = useState<Song | null | "new">(null);
   const [saving, setSaving] = useState(false);
   const [actionError, setActionError] = useState("");
 
-  // Local songs state for optimistic reordering
-  const [localSongs, setLocalSongs] = useState<Song[]>(songs);
-
-  // Sync localSongs when songs prop changes (e.g., after refresh)
-  useEffect(() => {
-    setLocalSongs(songs);
-  }, [songs]);
-
-  const activeSong = localSongs.find((song) => song.id === activeSongId);
-  const stagedSong = localSongs.find((song) => song.id === stagedId);
-
-  const filteredSongs = useMemo(
-    () =>
-      localSongs.filter((song) =>
-        song.title.toLowerCase().includes(query.toLowerCase()),
-      ),
-    [localSongs, query],
-  );
+  // Search
+  const [query, setQuery] = useState("");
 
   // DnD sensors
   const sensors = useSensors(
     useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 8,
-      },
+      activationConstraint: { distance: 8 },
     }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
     }),
   );
 
-  const handleDragEnd = async (event: DragEndEvent) => {
+  // Library drag end
+  const handleLibraryDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
 
-    const oldIndex = localSongs.findIndex((s) => s.id === active.id);
-    const newIndex = localSongs.findIndex((s) => s.id === over.id);
-
+    const oldIndex = localLibrarySongs.findIndex((s) => s.id === active.id);
+    const newIndex = localLibrarySongs.findIndex((s) => s.id === over.id);
     if (oldIndex === -1 || newIndex === -1) return;
 
-    // Optimistically reorder
-    const reordered = arrayMove(localSongs, oldIndex, newIndex);
-    setLocalSongs(reordered);
+    const reordered = arrayMove(localLibrarySongs, oldIndex, newIndex);
+    setLocalLibrarySongs(reordered);
 
-    // Recalculate sort_order starting from 1
     const updates: { id: string; sort_order: number }[] = reordered.map(
-      (song: Song, index: number) => ({
-        id: song.id,
-        sort_order: index + 1,
-      })
+      (song, index) => ({ id: song.id, sort_order: index + 1 })
     );
 
-    // Persist to Supabase
     try {
-      const promises = updates.map(({ id, sort_order }: { id: string; sort_order: number }) =>
-        supabase
-          .from("songs")
-          .update({ sort_order })
-          .eq("id", Number(id))
+      await Promise.all(
+        updates.map(({ id, sort_order }) =>
+          supabase
+            .from("songs")
+            .update({ sort_order })
+            .eq("id", Number(id))
+        )
       );
-      await Promise.all(promises);
-      // Reload authoritative order
       await refreshSongs();
     } catch (err) {
-      console.error("Failed to update sort order:", err);
+      console.error(err);
       alert("Failed to save new order. Reloading saved order…");
       await refreshSongs();
     }
   };
 
+  // Event drag end
+  const handleEventDragEnd = async (event: DragEndEvent) => {
+    if (!selectedEventId) return;
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    const oldIndex = localEventSongs.findIndex((s) => s.id === active.id);
+    const newIndex = localEventSongs.findIndex((s) => s.id === over.id);
+    if (oldIndex === -1 || newIndex === -1) return;
+
+    const reordered = arrayMove(localEventSongs, oldIndex, newIndex);
+    setLocalEventSongs(reordered);
+
+    const updates: { id: string; sort_order: number }[] = reordered.map(
+      (song, index) => ({ id: song.id, sort_order: index + 1 })
+    );
+
+    try {
+      await Promise.all(
+        updates.map(({ id, sort_order }) =>
+          supabase
+            .from("event_songs")
+            .update({ sort_order })
+            .eq("event_id", Number(selectedEventId))
+            .eq("song_id", Number(id))
+        )
+      );
+      await refreshEventSongs(selectedEventId);
+    } catch (err) {
+      console.error(err);
+      alert("Failed to save new event order. Reloading saved order…");
+      await refreshEventSongs(selectedEventId);
+    }
+  };
+
+  // Published / blackout
   const publish = async () => {
     try {
       setActionError("");
       await onSetLive(stagedId);
       setStagedId(null);
     } catch (err) {
-      setActionError(
-        err instanceof Error ? err.message : "Could not update live song",
-      );
+      setActionError(err instanceof Error ? err.message : "Could not update live song");
     }
   };
 
@@ -587,37 +992,159 @@ function AdminPanel({
       setActionError("");
       await onSetLive(null);
     } catch (err) {
-      setActionError(
-        err instanceof Error ? err.message : "Could not clear stage",
-      );
+      setActionError(err instanceof Error ? err.message : "Could not clear stage");
     }
   };
 
-  const removeSong = async (song: Song) => {
+  // Remove song from event
+  const removeFromEvent = async (song: Song) => {
+    if (!selectedEventId) return;
+    if (song.id === activeSongId) {
+      setActionError("Cannot remove the currently live song from the event.");
+      return;
+    }
+    if (!window.confirm(`Remove “${song.title}” from this event? The song will remain in the Song Library.`)) return;
+
+    try {
+      const { error } = await supabase
+        .from("event_songs")
+        .delete()
+        .eq("event_id", Number(selectedEventId))
+        .eq("song_id", Number(song.id));
+      if (error) throw error;
+      if (stagedId === song.id) setStagedId(null);
+      await refreshEventSongs(selectedEventId);
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : "Failed to remove from event");
+    }
+  };
+
+  // Delete library song
+  const deleteLibrarySong = async (song: Song) => {
     if (song.id === activeSongId) {
       setActionError("Blackout the stage before deleting the live song.");
       return;
     }
-    if (!window.confirm(`Delete “${song.title}”? This cannot be undone.`))
-      return;
-    const { error } = await supabase
-      .from("songs")
-      .delete()
-      .eq("id", Number(song.id));
-    if (error) {
-      setActionError(error.message);
-      return;
+    if (!window.confirm(`Delete “${song.title}”? This will also remove it from every event setlist. This cannot be undone.`)) return;
+    try {
+      const { error } = await supabase
+        .from("songs")
+        .delete()
+        .eq("id", Number(song.id));
+      if (error) throw error;
+      await refreshSongs();
+      // If this song was staged, clear stagedId
+      if (stagedId === song.id) setStagedId(null);
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : "Failed to delete song");
     }
-    await refreshSongs();
   };
 
-  const logout = async () => {
-    await supabase.auth.signOut();
-    window.location.reload();
+  // Event create
+  const createEvent = async (name: string) => {
+    setSavingEvent(true);
+    try {
+      const { data, error } = await supabase
+        .from("events")
+        .insert({ name })
+        .select("id")
+        .single();
+      if (error) throw error;
+      await refreshEvents();
+      const newId = String(data.id);
+      onSelectEvent(newId);
+    } finally {
+      setSavingEvent(false);
+    }
+  };
+
+  // Event rename
+  const renameEvent = async (name: string) => {
+    if (!editingEvent) return;
+    setSavingEvent(true);
+    try {
+      const { error } = await supabase
+        .from("events")
+        .update({ name })
+        .eq("id", Number(editingEvent.id));
+      if (error) throw error;
+      await refreshEvents();
+      // Keep selection
+      onSelectEvent(editingEvent.id);
+    } finally {
+      setSavingEvent(false);
+      setEditingEvent(null);
+    }
+  };
+
+  // Event delete
+  const deleteEvent = async () => {
+    if (!selectedEventId) return;
+    const event = events.find(e => e.id === selectedEventId);
+    if (!event) return;
+    if (!window.confirm(`Delete “${event.name}”? Its setlist will be removed, but Song Library songs will remain available.`)) return;
+    try {
+      const { error } = await supabase
+        .from("events")
+        .delete()
+        .eq("id", Number(selectedEventId));
+      if (error) throw error;
+      await refreshEvents();
+      onSelectEvent(null);
+      setStagedId(null);
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : "Failed to delete event");
+    }
+  };
+
+  // Add songs to event
+  const addSongsToEvent = async (songIds: string[]) => {
+    if (!selectedEventId) return;
+    setAddingSongs(true);
+    try {
+      // Get current max sort_order
+      const currentMax = eventSongs.reduce((max, s) => Math.max(max, s.sortOrder ?? 0), 0);
+      const inserts = songIds.map((id, index) => ({
+        event_id: Number(selectedEventId),
+        song_id: Number(id),
+        sort_order: currentMax + index + 1,
+      }));
+      const { error } = await supabase
+        .from("event_songs")
+        .insert(inserts);
+      if (error) throw error;
+      await refreshEventSongs(selectedEventId);
+    } finally {
+      setAddingSongs(false);
+    }
+  };
+
+  // Selected event details
+  const selectedEvent = events.find(e => e.id === selectedEventId);
+  const activeSong = (activeTab === "events" ? localEventSongs : localLibrarySongs).find(s => s.id === activeSongId);
+  const stagedSong = (activeTab === "events" ? localEventSongs : localLibrarySongs).find(s => s.id === stagedId);
+
+  // Filtered songs for current tab
+  const filteredSongs = useMemo(() => {
+    const source = activeTab === "events" ? localEventSongs : localLibrarySongs;
+    return source.filter(s => s.title.toLowerCase().includes(query.toLowerCase()));
+  }, [activeTab, localEventSongs, localLibrarySongs, query]);
+
+  // When switching tabs, clear stagedId? According to spec, switching events clears stagedId, but switching tabs? We'll keep stagedId as is, but in Library tab we don't show stage controls.
+  // Also, switching events clears stagedId.
+  const handleSelectEvent = (id: string | null) => {
+    onSelectEvent(id);
+    setStagedId(null);
+  };
+
+  // Handler for staging in event tab
+  const stageSong = (id: string) => {
+    setStagedId(id);
   };
 
   return (
     <div className="min-h-screen bg-zinc-950 text-white md:flex">
+      {/* Sidebar - unchanged */}
       <aside className="flex w-full flex-col border-b border-white/10 bg-zinc-900/60 p-6 md:min-h-screen md:w-80 md:border-r md:border-b-0">
         <h1 className="text-2xl font-black">
           LOLO<span className="text-blue-500">SYNC</span>
@@ -635,7 +1162,7 @@ function AdminPanel({
           <StatusCard
             icon={<Activity size={16} />}
             label="Songs"
-            value={String(localSongs.length)}
+            value={String(localLibrarySongs.length)}
             ok
           />
           <StatusCard
@@ -659,7 +1186,10 @@ function AdminPanel({
             BLACKOUT STAGE
           </button>
           <button
-            onClick={logout}
+            onClick={async () => {
+              await supabase.auth.signOut();
+              window.location.reload();
+            }}
             className="flex w-full items-center justify-center gap-2 rounded-xl bg-zinc-800 py-3 text-sm font-bold text-zinc-300"
           >
             <LogOut size={17} />
@@ -667,101 +1197,282 @@ function AdminPanel({
           </button>
         </div>
       </aside>
+
       <main className="flex-1 p-6 md:p-8">
-        <div className="mb-7 grid gap-4 md:grid-cols-2">
-          <div className="rounded-2xl border border-blue-500/30 bg-blue-500/10 p-5">
-            <p className="text-xs font-bold tracking-widest text-blue-300 uppercase">
-              Live on stage
-            </p>
-            <h2 className="mt-2 truncate text-2xl font-bold">
-              {activeSong?.title || "— STAGE BLACKOUT —"}
-            </h2>
-          </div>
-          <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
-            <p className="text-xs font-bold tracking-widest text-zinc-400 uppercase">
-              Next up
-            </p>
-            <h2 className="mt-2 truncate text-xl">
-              {stagedSong?.title || "Select a song below"}
-            </h2>
-            {stagedId && (
-              <button
-                onClick={publish}
-                className="mt-4 min-h-12 w-full rounded-lg bg-green-500 px-4 py-3 text-xs font-bold tracking-widest text-black uppercase transition-all hover:bg-green-400 active:scale-[0.98] sm:text-sm"
-              >
-                PUSH TO LIVE
-              </button>
-            )}
-          </div>
-        </div>
-        <div className="mb-6 flex flex-col gap-3 sm:flex-row">
-          <input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search setlist..."
-            className="flex-1 rounded-xl border border-white/10 bg-white/5 p-4 text-white outline-none focus:border-blue-500"
-          />
+        {/* Tabs */}
+        <div className="mb-6 flex gap-2 border-b border-white/10 pb-3">
           <button
-            onClick={() => setEditing("new")}
-            className="min-h-12 w-full rounded-xl bg-blue-600 px-4 py-3 text-xs font-bold tracking-wider text-white transition-all hover:bg-blue-500 active:scale-[0.98] sm:w-auto sm:px-5 sm:text-sm"
+            onClick={() => setActiveTab("events")}
+            className={cn(
+              "rounded-lg px-5 py-2 text-sm font-bold transition-colors",
+              activeTab === "events"
+                ? "bg-blue-600 text-white"
+                : "text-zinc-400 hover:text-white"
+            )}
           >
-            <Plus size={18} className="inline-block sm:mr-2" />
-            <span className="hidden sm:inline">ADD SONG</span>
-            <span className="sm:hidden">ADD</span>
+            EVENTS
+          </button>
+          <button
+            onClick={() => setActiveTab("library")}
+            className={cn(
+              "rounded-lg px-5 py-2 text-sm font-bold transition-colors",
+              activeTab === "library"
+                ? "bg-blue-600 text-white"
+                : "text-zinc-400 hover:text-white"
+            )}
+          >
+            SONG LIBRARY
           </button>
         </div>
-        {filteredSongs.length === 0 ? (
-          <div className="py-16 text-center text-zinc-500">
-            <AlertCircle className="mx-auto mb-3" />
-            No songs found.
+
+        {/* Live/Staged cards - shown only in Events tab */}
+        {activeTab === "events" && (
+          <div className="mb-7 grid gap-4 md:grid-cols-2">
+            <div className="rounded-2xl border border-blue-500/30 bg-blue-500/10 p-5">
+              <p className="text-xs font-bold tracking-widest text-blue-300 uppercase">
+                Live on stage
+              </p>
+              <h2 className="mt-2 truncate text-2xl font-bold">
+                {activeSong?.title || "— STAGE BLACKOUT —"}
+              </h2>
+            </div>
+            <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
+              <p className="text-xs font-bold tracking-widest text-zinc-400 uppercase">
+                Next up
+              </p>
+              <h2 className="mt-2 truncate text-xl">
+                {stagedSong?.title || "Select a song below"}
+              </h2>
+              {stagedId && selectedEventId && (
+                <button
+                  onClick={publish}
+                  className="mt-4 min-h-12 w-full rounded-lg bg-green-500 px-4 py-3 text-xs font-bold tracking-widest text-black uppercase transition-all hover:bg-green-400 active:scale-[0.98] sm:text-sm"
+                >
+                  PUSH TO LIVE
+                </button>
+              )}
+            </div>
           </div>
-        ) : (
-          <DndContext
-            sensors={sensors}
-            collisionDetection={closestCenter}
-            onDragEnd={handleDragEnd}
-          >
-            <SortableContext
-              items={filteredSongs.map((s) => s.id)}
-              strategy={rectSortingStrategy}
-            >
-              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                {filteredSongs.map((song) => {
-                  const isLive = activeSongId === song.id;
-                  const isStaged = stagedId === song.id;
-                  const hasPlayedThisSession = playedSongIds.includes(song.id);
-                  return (
-                    <SortableSongTile
-                      key={song.id}
-                      song={song}
-                      isLive={isLive}
-                      isStaged={isStaged}
-                      hasPlayedThisSession={hasPlayedThisSession}
-                      onStage={setStagedId}
-                      onEdit={setEditing}
-                      onDelete={removeSong}
-                    />
-                  );
-                })}
+        )}
+
+        {/* Events Tab */}
+        {activeTab === "events" && (
+          <div>
+            {/* Events header */}
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <h2 className="text-xl font-bold">Events</h2>
+                <button
+                  onClick={() => setShowCreateEvent(true)}
+                  className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-bold text-white hover:bg-blue-500"
+                >
+                  + CREATE EVENT
+                </button>
               </div>
-            </SortableContext>
-          </DndContext>
+              {selectedEventId && (
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => {
+                      const ev = events.find(e => e.id === selectedEventId);
+                      if (ev) setEditingEvent(ev);
+                    }}
+                    className="rounded-lg bg-zinc-800 px-3 py-2 text-xs font-bold text-white"
+                  >
+                    <Pencil size={16} className="inline mr-1" /> Rename
+                  </button>
+                  <button
+                    onClick={deleteEvent}
+                    className="rounded-lg bg-red-500/10 px-3 py-2 text-xs font-bold text-red-300"
+                  >
+                    <Trash2 size={16} className="inline mr-1" /> Delete
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Event selector */}
+            <div className="mb-6 flex flex-wrap gap-2 overflow-x-auto pb-2">
+              {events.length === 0 ? (
+                <div className="w-full text-center py-6 text-zinc-400">
+                  No events yet. Create one!
+                </div>
+              ) : (
+                events.map(event => (
+                  <button
+                    key={event.id}
+                    onClick={() => handleSelectEvent(event.id)}
+                    className={cn(
+                      "rounded-full border px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap",
+                      selectedEventId === event.id
+                        ? "border-blue-500 bg-blue-500/20 text-blue-300"
+                        : "border-white/10 text-zinc-300 hover:border-white/30"
+                    )}
+                  >
+                    {event.name}
+                  </button>
+                ))
+              )}
+            </div>
+
+            {/* Selected event setlist */}
+            {selectedEventId ? (
+              <>
+                <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <h3 className="text-lg font-bold text-white">
+                      {selectedEvent?.name || "Event"}
+                    </h3>
+                    <p className="text-xs text-zinc-400">
+                      {localEventSongs.length} songs
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setShowAddSongs(true)}
+                    className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-bold text-white"
+                  >
+                    + ADD SONGS FROM LIBRARY
+                  </button>
+                </div>
+
+                {/* Search */}
+                <div className="mb-4">
+                  <input
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    placeholder="Search event setlist..."
+                    className="w-full rounded-xl border border-white/10 bg-white/5 p-4 text-white outline-none focus:border-blue-500"
+                  />
+                </div>
+
+                {filteredSongs.length === 0 ? (
+                  <div className="py-16 text-center text-zinc-500">
+                    <AlertCircle className="mx-auto mb-3" />
+                    {localEventSongs.length === 0
+                      ? "This event has no songs yet."
+                      : "No songs match your search."}
+                  </div>
+                ) : (
+                  <DndContext
+                    sensors={sensors}
+                    collisionDetection={closestCenter}
+                    onDragEnd={handleEventDragEnd}
+                  >
+                    <SortableContext
+                      items={filteredSongs.map(s => s.id)}
+                      strategy={rectSortingStrategy}
+                    >
+                      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                        {filteredSongs.map(song => {
+                          const isLive = activeSongId === song.id;
+                          const isStaged = stagedId === song.id;
+                          const hasPlayed = playedSongIds.includes(song.id);
+                          return (
+                            <SortableSongTile
+                              key={song.id}
+                              song={song}
+                              isLive={isLive}
+                              isStaged={isStaged}
+                              hasPlayedThisSession={hasPlayed}
+                              onStage={stageSong}
+                              onEdit={(s) => setEditing(s)}
+                              onRemoveFromEvent={removeFromEvent}
+                              showRemoveFromEvent={true}
+                              isEventTab={true}
+                            />
+                          );
+                        })}
+                      </div>
+                    </SortableContext>
+                  </DndContext>
+                )}
+              </>
+            ) : (
+              <div className="py-16 text-center text-zinc-500">
+                Select an event to manage its setlist.
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Song Library Tab */}
+        {activeTab === "library" && (
+          <div>
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+              <h2 className="text-xl font-bold">Song Library</h2>
+              <button
+                onClick={() => setEditing("new")}
+                className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-bold text-white"
+              >
+                + ADD SONG
+              </button>
+            </div>
+
+            {/* Search */}
+            <div className="mb-4">
+              <input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Search library..."
+                className="w-full rounded-xl border border-white/10 bg-white/5 p-4 text-white outline-none focus:border-blue-500"
+              />
+            </div>
+
+            {filteredSongs.length === 0 ? (
+              <div className="py-16 text-center text-zinc-500">
+                <AlertCircle className="mx-auto mb-3" />
+                No songs found.
+              </div>
+            ) : (
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleLibraryDragEnd}
+              >
+                <SortableContext
+                  items={filteredSongs.map(s => s.id)}
+                  strategy={rectSortingStrategy}
+                >
+                  <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                    {filteredSongs.map(song => {
+                      const isLive = activeSongId === song.id;
+                      const isStaged = stagedId === song.id;
+                      const hasPlayed = playedSongIds.includes(song.id);
+                      return (
+                        <SortableSongTile
+                          key={song.id}
+                          song={song}
+                          isLive={isLive}
+                          isStaged={isStaged}
+                          hasPlayedThisSession={hasPlayed}
+                          onStage={() => {}} // no staging in library tab
+                          onEdit={(s) => setEditing(s)}
+                          onDelete={deleteLibrarySong}
+                          showRemoveFromEvent={false}
+                          isEventTab={false}
+                        />
+                      );
+                    })}
+                  </div>
+                </SortableContext>
+              </DndContext>
+            )}
+          </div>
         )}
       </main>
+
+      {/* Modals */}
       <AnimatePresence>
         {editing && (
           <SongModal
             song={editing === "new" ? null : editing}
-            nextOrder={localSongs.length + 1}
+            nextOrder={(activeTab === "library" ? localLibrarySongs : localEventSongs).length + 1}
             saving={saving}
             onClose={() => setEditing(null)}
             onSave={async (payload) => {
               setSaving(true);
               try {
                 if (editing === "new") {
-                  const { error } = await supabase
-                    .from("songs")
-                    .insert(payload);
+                  const { error } = await supabase.from("songs").insert(payload);
                   if (error) throw error;
                 } else {
                   const { error } = await supabase
@@ -771,14 +1482,47 @@ function AdminPanel({
                   if (error) throw error;
                 }
                 await refreshSongs();
+                // If in events tab and event selected, refresh event songs as well
+                if (activeTab === "events" && selectedEventId) {
+                  await refreshEventSongs(selectedEventId);
+                }
                 setEditing(null);
               } catch (err) {
-                setActionError(
-                  err instanceof Error ? err.message : "Could not save song",
-                );
+                setActionError(err instanceof Error ? err.message : "Could not save song");
               }
               setSaving(false);
             }}
+          />
+        )}
+        {showCreateEvent && (
+          <EventModal
+            isOpen
+            onClose={() => setShowCreateEvent(false)}
+            onSave={createEvent}
+            title="Create Event"
+            saveLabel="Create Event"
+            saving={savingEvent}
+          />
+        )}
+        {editingEvent && (
+          <EventModal
+            isOpen
+            onClose={() => setEditingEvent(null)}
+            onSave={renameEvent}
+            initialName={editingEvent.name}
+            title="Rename Event"
+            saveLabel="Save"
+            saving={savingEvent}
+          />
+        )}
+        {showAddSongs && selectedEventId && (
+          <AddSongsToEventModal
+            isOpen
+            onClose={() => setShowAddSongs(false)}
+            librarySongs={songs}
+            eventSongs={localEventSongs}
+            onAdd={addSongsToEvent}
+            saving={addingSongs}
           />
         )}
       </AnimatePresence>
@@ -836,9 +1580,9 @@ function SongModal({
   const [title, setTitle] = useState(song?.title || "");
   const [lyrics, setLyrics] = useState(song?.lyrics.join("\n") || "");
   const initialColor =
-  typeof song?.color === "string" && song.color.trim()
-    ? song.color
-    : getRandomGradient();
+    typeof song?.color === "string" && song.color.trim()
+      ? song.color
+      : getRandomGradient();
 
   const [color, setColor] = useState<string>(initialColor);
   const submit = async (event: React.FormEvent) => {
@@ -973,8 +1717,7 @@ function AudienceView({ song }: { song: Song | null }) {
             </p>
           </div>
         </motion.div>
-      )
-      }
-    </AnimatePresence >
+      )}
+    </AnimatePresence>
   );
 }
