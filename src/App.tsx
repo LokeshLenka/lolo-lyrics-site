@@ -1162,7 +1162,7 @@ function AdminPanel({
   return (
     <div className="min-h-screen bg-zinc-950 text-white md:flex">
       {/* Sidebar */}
-      <aside className="flex w-full flex-col border-b border-white/10 bg-zinc-900/60 md:min-h-screen md:w-80 md:border-r md:border-b-0 sticky top-0 max-h-screen overflow-y-auto">
+      <aside className="flex w-full flex-col border-b border-white/10 bg-zinc-900/60 md:min-h-screen md:w-80 md:border-r md:border-b-0">
         {/* Sticky header with logo and logout */}
         <div className="sticky top-0 z-20 bg-zinc-900/80 backdrop-blur-sm border-b border-white/10 p-4">
           <div className="flex items-center justify-between">
