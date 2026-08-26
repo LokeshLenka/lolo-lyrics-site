@@ -4,15 +4,18 @@ import { AnimatePresence, motion } from "framer-motion";
 import {
   Activity,
   AlertCircle,
-  Clock,
   LogOut,
   Radio,
-  ShieldAlert,
   X,
   GripVertical,
   Pencil,
   Trash2,
   Search,
+  Plus,
+  MoreVertical,
+  ChevronDown,
+  Menu,
+  ShieldAlert,
 } from "lucide-react";
 import { clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
@@ -453,7 +456,7 @@ function LoginScreen({
   );
 }
 
-// Sortable song tile component – now using div outer, with clickable content for staging
+// Sortable song tile component
 function SortableSongTile({
   song,
   isLive,
@@ -465,6 +468,7 @@ function SortableSongTile({
   onRemoveFromEvent,
   showRemoveFromEvent = false,
   isEventTab = false,
+  showEdit = true,
 }: {
   song: Song;
   isLive: boolean;
@@ -476,6 +480,7 @@ function SortableSongTile({
   onRemoveFromEvent?: (song: Song) => void;
   showRemoveFromEvent?: boolean;
   isEventTab?: boolean;
+  showEdit?: boolean;
 }) {
   const {
     attributes,
@@ -523,7 +528,6 @@ function SortableSongTile({
             {song.title}
           </p>
         </div>
-        {/* Drag handle – only this initiates drag */}
         <button
           type="button"
           aria-label="Drag to reorder song"
@@ -554,34 +558,44 @@ function SortableSongTile({
         )}
       </div>
 
-      <div
-        className="mt-3 flex gap-2"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <button
-          onClick={() => onEdit(song)}
-          className="rounded-lg bg-zinc-800 px-3 py-2 text-xs font-bold"
+      {!isEventTab && (
+        <div
+          className="mt-3 flex gap-2"
+          onClick={(e) => e.stopPropagation()}
         >
-          EDIT
-        </button>
-        {showRemoveFromEvent && onRemoveFromEvent ? (
-          <button
-            onClick={() => onRemoveFromEvent(song)}
-            className="rounded-lg bg-red-500/10 px-3 py-2 text-xs font-bold text-red-300"
-          >
-            REMOVE FROM EVENT
-          </button>
-        ) : (
-          onDelete && (
+          {showEdit && (
+            <button
+              onClick={() => onEdit(song)}
+              className="rounded-lg bg-zinc-800 px-3 py-2 text-xs font-bold"
+            >
+              EDIT
+            </button>
+          )}
+          {onDelete && (
             <button
               onClick={() => onDelete(song)}
               className="rounded-lg bg-red-500/10 px-3 py-2 text-xs font-bold text-red-300"
             >
               DELETE
             </button>
-          )
-        )}
-      </div>
+          )}
+        </div>
+      )}
+
+      {isEventTab && showRemoveFromEvent && onRemoveFromEvent && (
+        <button
+          type="button"
+          aria-label={`Remove ${song.title} from this event`}
+          title="Remove from event"
+          className="absolute right-3 bottom-3 flex h-9 w-9 items-center justify-center rounded-lg border border-red-500/30 bg-red-500/10 text-red-300 transition-colors hover:bg-red-500/20 hover:text-red-200 active:scale-95"
+          onClick={(e) => {
+            e.stopPropagation();
+            onRemoveFromEvent(song);
+          }}
+        >
+          <Trash2 size={17} />
+        </button>
+      )}
     </motion.div>
   );
 }
@@ -873,10 +887,17 @@ function AdminPanel({
   const [showAddSongs, setShowAddSongs] = useState(false);
   const [addingSongs, setAddingSongs] = useState(false);
 
+  // Dropdown state for event actions (rename/delete)
+  const [isEventActionsOpen, setIsEventActionsOpen] = useState(false);
+
+  // Dropdown state for event selector
+  const [isEventSelectorOpen, setIsEventSelectorOpen] = useState(false);
+
+  // Mobile sidebar toggle for event list
+  const [isEventListOpen, setIsEventListOpen] = useState(false);
+
   // Local state for event songs (optimistic reorder)
   const [localEventSongs, setLocalEventSongs] = useState<Song[]>(eventSongs);
-
-  // Keep localEventSongs in sync with prop
   useEffect(() => {
     setLocalEventSongs(eventSongs);
   }, [eventSongs]);
@@ -898,10 +919,12 @@ function AdminPanel({
   // Search
   const [query, setQuery] = useState("");
 
-  // DnD sensors
+  // DnD sensors - increased distance to allow scrolling on mobile
   const sensors = useSensors(
     useSensor(PointerSensor, {
-      activationConstraint: { distance: 8 },
+      activationConstraint: {
+        distance: 20, // increased from 8 to allow easier scrolling
+      },
     }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
@@ -976,7 +999,7 @@ function AdminPanel({
     }
   };
 
-  // Published / blackout
+  // Publish live
   const publish = async () => {
     try {
       setActionError("");
@@ -987,10 +1010,12 @@ function AdminPanel({
     }
   };
 
+  // Blackout - called from sidebar
   const blackout = async () => {
     try {
       setActionError("");
       await onSetLive(null);
+      setStagedId(null);
     } catch (err) {
       setActionError(err instanceof Error ? err.message : "Could not clear stage");
     }
@@ -1033,7 +1058,6 @@ function AdminPanel({
         .eq("id", Number(song.id));
       if (error) throw error;
       await refreshSongs();
-      // If this song was staged, clear stagedId
       if (stagedId === song.id) setStagedId(null);
     } catch (err) {
       setActionError(err instanceof Error ? err.message : "Failed to delete song");
@@ -1069,7 +1093,6 @@ function AdminPanel({
         .eq("id", Number(editingEvent.id));
       if (error) throw error;
       await refreshEvents();
-      // Keep selection
       onSelectEvent(editingEvent.id);
     } finally {
       setSavingEvent(false);
@@ -1102,7 +1125,6 @@ function AdminPanel({
     if (!selectedEventId) return;
     setAddingSongs(true);
     try {
-      // Get current max sort_order
       const currentMax = eventSongs.reduce((max, s) => Math.max(max, s.sortOrder ?? 0), 0);
       const inserts = songIds.map((id, index) => ({
         event_id: Number(selectedEventId),
@@ -1130,29 +1152,43 @@ function AdminPanel({
     return source.filter(s => s.title.toLowerCase().includes(query.toLowerCase()));
   }, [activeTab, localEventSongs, localLibrarySongs, query]);
 
-  // When switching tabs, clear stagedId? According to spec, switching events clears stagedId, but switching tabs? We'll keep stagedId as is, but in Library tab we don't show stage controls.
-  // Also, switching events clears stagedId.
   const handleSelectEvent = (id: string | null) => {
     onSelectEvent(id);
     setStagedId(null);
+    setIsEventSelectorOpen(false);
+    setIsEventListOpen(false);
   };
 
-  // Handler for staging in event tab
   const stageSong = (id: string) => {
     setStagedId(id);
   };
 
   return (
     <div className="min-h-screen bg-zinc-950 text-white md:flex">
-      {/* Sidebar - unchanged */}
-      <aside className="flex w-full flex-col border-b border-white/10 bg-zinc-900/60 p-6 md:min-h-screen md:w-80 md:border-r md:border-b-0">
-        <h1 className="text-2xl font-black">
-          LOLO<span className="text-blue-500">SYNC</span>
-        </h1>
-        <p className="mb-8 mt-1 text-xs tracking-widest text-zinc-500 uppercase">
-          Production console
-        </p>
-        <div className="space-y-3">
+      {/* Sidebar */}
+      <aside className="flex w-full flex-col border-b border-white/10 bg-zinc-900/60 md:min-h-screen md:w-80 md:border-r md:border-b-0">
+        {/* Sticky header with logo and logout */}
+        <div className="sticky top-0 z-20 bg-zinc-900/80 backdrop-blur-sm border-b border-white/10 p-4">
+          <div className="flex items-center justify-between">
+            <h1 className="text-2xl font-black">
+              LOLO<span className="text-blue-500">SYNC</span>
+            </h1>
+            <button
+              onClick={async () => {
+                await supabase.auth.signOut();
+                window.location.reload();
+              }}
+              className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-zinc-800 text-zinc-200 transition-colors hover:bg-zinc-700"
+              aria-label="Logout"
+              title="Logout"
+            >
+              <LogOut size={20} />
+            </button>
+          </div>
+        </div>
+
+        {/* Status cards */}
+        <div className="p-6 space-y-3">
           <StatusCard
             icon={<Radio size={16} />}
             label="Realtime Status"
@@ -1165,35 +1201,18 @@ function AdminPanel({
             value={String(localLibrarySongs.length)}
             ok
           />
-          <StatusCard
-            icon={<Clock size={16} />}
-            label="Live on Stage"
-            value={activeSong?.title || "Blackout"}
-            ok={Boolean(activeSong)}
-          />
-        </div>
-        {actionError && (
-          <p className="mt-4 rounded-lg bg-red-500/10 p-3 text-sm text-red-300">
-            {actionError}
-          </p>
-        )}
-        <div className="mt-8 space-y-3 md:mt-auto">
+          {actionError && (
+            <p className="rounded-lg bg-red-500/10 p-3 text-sm text-red-300">
+              {actionError}
+            </p>
+          )}
+          {/* Blackout button in sidebar */}
           <button
             onClick={blackout}
-            className="flex w-full items-center justify-center gap-2 rounded-xl border border-red-500/30 bg-red-500/10 py-3 font-bold text-red-300"
+            className="flex w-full items-center justify-center gap-2 rounded-xl border border-red-500/30 bg-red-500/10 py-3 font-bold text-red-300 transition-colors hover:bg-red-500/20"
           >
             <ShieldAlert size={17} />
             BLACKOUT STAGE
-          </button>
-          <button
-            onClick={async () => {
-              await supabase.auth.signOut();
-              window.location.reload();
-            }}
-            className="flex w-full items-center justify-center gap-2 rounded-xl bg-zinc-800 py-3 text-sm font-bold text-zinc-300"
-          >
-            <LogOut size={17} />
-            LOG OUT
           </button>
         </div>
       </aside>
@@ -1202,7 +1221,10 @@ function AdminPanel({
         {/* Tabs */}
         <div className="mb-6 flex gap-2 border-b border-white/10 pb-3">
           <button
-            onClick={() => setActiveTab("events")}
+            onClick={() => {
+              setActiveTab("events");
+              setIsEventListOpen(false);
+            }}
             className={cn(
               "rounded-lg px-5 py-2 text-sm font-bold transition-colors",
               activeTab === "events"
@@ -1257,140 +1279,252 @@ function AdminPanel({
 
         {/* Events Tab */}
         {activeTab === "events" && (
-          <div>
-            {/* Events header */}
-            <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-              <div className="flex items-center gap-3">
-                <h2 className="text-xl font-bold">Events</h2>
+          <div className="flex flex-col md:flex-row gap-6">
+            {/* Event List Sidebar - toggleable on all screens */}
+            <div className={cn(
+              "md:w-56 lg:w-64 flex-shrink-0",
+              "transition-all duration-300",
+              isEventListOpen ? "block" : "hidden"
+            )}>
+              <div className="rounded-xl border border-white/10 bg-zinc-900/50 p-3">
+                <div className="mb-2 flex items-center justify-between">
+                  <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-wider">Events</h3>
+                  <button
+                    type="button"
+                    aria-label="Create event"
+                    title="Create event"
+                    onClick={() => setShowCreateEvent(true)}
+                    className="flex h-7 w-7 items-center justify-center rounded-lg border border-blue-500/50 bg-zinc-800 text-blue-400 transition-colors hover:bg-zinc-700"
+                  >
+                    <Plus size={14} />
+                  </button>
+                </div>
+                <div className="max-h-[60vh] overflow-y-auto space-y-1">
+                  {events.length === 0 ? (
+                    <p className="py-2 text-center text-xs text-zinc-400">No events yet</p>
+                  ) : (
+                    events.map(event => {
+                      const isSelected = selectedEventId === event.id;
+                      return (
+                        <div
+                          key={event.id}
+                          className={cn(
+                            "flex items-center justify-between rounded-lg p-1.5 transition-colors text-sm",
+                            isSelected
+                              ? "bg-blue-500/20 border border-blue-500/30"
+                              : "hover:bg-white/5"
+                          )}
+                        >
+                          <button
+                            onClick={() => handleSelectEvent(event.id)}
+                            className="flex-1 truncate text-left font-medium"
+                          >
+                            {event.name}
+                          </button>
+                          <div className="flex gap-0.5 ml-1">
+                            <button
+                              type="button"
+                              aria-label={`Rename ${event.name}`}
+                              title="Rename"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setEditingEvent(event);
+                              }}
+                              className="rounded p-0.5 text-zinc-400 hover:text-white transition-colors"
+                            >
+                              <Pencil size={12} />
+                            </button>
+                            <button
+                              type="button"
+                              aria-label={`Delete ${event.name}`}
+                              title="Delete"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (event.id === selectedEventId) {
+                                  deleteEvent();
+                                } else {
+                                  onSelectEvent(event.id);
+                                  setTimeout(() => deleteEvent(), 50);
+                                }
+                              }}
+                              className="rounded p-0.5 text-red-400 hover:text-red-300 transition-colors"
+                            >
+                              <Trash2 size={12} />
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Main Event Content */}
+            <div className="flex-1 min-w-0">
+              {/* Header: toggle button + selector + actions */}
+              <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
                 <button
-                  onClick={() => setShowCreateEvent(true)}
-                  className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-bold text-white hover:bg-blue-500"
+                  type="button"
+                  aria-label="Toggle event list"
+                  onClick={() => setIsEventListOpen(!isEventListOpen)}
+                  className="flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 bg-zinc-800 text-white hover:bg-zinc-700"
                 >
-                  + CREATE EVENT
+                  <Menu size={18} />
                 </button>
-              </div>
-              {selectedEventId && (
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => {
-                      const ev = events.find(e => e.id === selectedEventId);
-                      if (ev) setEditingEvent(ev);
-                    }}
-                    className="rounded-lg bg-zinc-800 px-3 py-2 text-xs font-bold text-white"
-                  >
-                    <Pencil size={16} className="inline mr-1" /> Rename
-                  </button>
-                  <button
-                    onClick={deleteEvent}
-                    className="rounded-lg bg-red-500/10 px-3 py-2 text-xs font-bold text-red-300"
-                  >
-                    <Trash2 size={16} className="inline mr-1" /> Delete
-                  </button>
-                </div>
-              )}
-            </div>
 
-            {/* Event selector */}
-            <div className="mb-6 flex flex-wrap gap-2 overflow-x-auto pb-2">
-              {events.length === 0 ? (
-                <div className="w-full text-center py-6 text-zinc-400">
-                  No events yet. Create one!
-                </div>
-              ) : (
-                events.map(event => (
+                <div className="relative flex-1 min-w-[140px]">
                   <button
-                    key={event.id}
-                    onClick={() => handleSelectEvent(event.id)}
-                    className={cn(
-                      "rounded-full border px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap",
-                      selectedEventId === event.id
-                        ? "border-blue-500 bg-blue-500/20 text-blue-300"
-                        : "border-white/10 text-zinc-300 hover:border-white/30"
-                    )}
+                    type="button"
+                    aria-label="Select event"
+                    onClick={() => setIsEventSelectorOpen(!isEventSelectorOpen)}
+                    className="flex w-full items-center justify-between rounded-xl border border-white/10 bg-zinc-800 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-zinc-700"
                   >
-                    {event.name}
+                    <span className="truncate">
+                      {selectedEvent ? selectedEvent.name : "Select an event"}
+                    </span>
+                    <ChevronDown size={14} className="ml-2 flex-shrink-0" />
                   </button>
-                ))
-              )}
-            </div>
-
-            {/* Selected event setlist */}
-            {selectedEventId ? (
-              <>
-                <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-                  <div>
-                    <h3 className="text-lg font-bold text-white">
-                      {selectedEvent?.name || "Event"}
-                    </h3>
-                    <p className="text-xs text-zinc-400">
-                      {localEventSongs.length} songs
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => setShowAddSongs(true)}
-                    className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-bold text-white"
-                  >
-                    + ADD SONGS FROM LIBRARY
-                  </button>
+                  {isEventSelectorOpen && (
+                    <div className="absolute left-0 top-full z-30 mt-1 w-full max-h-60 overflow-y-auto rounded-xl border border-white/10 bg-zinc-900 p-1 shadow-2xl">
+                      {events.length === 0 ? (
+                        <div className="px-3 py-2 text-sm text-zinc-400">No events</div>
+                      ) : (
+                        events.map(event => (
+                          <button
+                            key={event.id}
+                            onClick={() => handleSelectEvent(event.id)}
+                            className={cn(
+                              "w-full truncate rounded-lg px-3 py-2 text-left text-sm transition-colors",
+                              selectedEventId === event.id
+                                ? "bg-blue-500/20 text-blue-300"
+                                : "text-zinc-200 hover:bg-zinc-800"
+                            )}
+                          >
+                            {event.name}
+                          </button>
+                        ))
+                      )}
+                    </div>
+                  )}
                 </div>
 
-                {/* Search */}
-                <div className="mb-4">
-                  <input
-                    value={query}
-                    onChange={(e) => setQuery(e.target.value)}
-                    placeholder="Search event setlist..."
-                    className="w-full rounded-xl border border-white/10 bg-white/5 p-4 text-white outline-none focus:border-blue-500"
-                  />
-                </div>
-
-                {filteredSongs.length === 0 ? (
-                  <div className="py-16 text-center text-zinc-500">
-                    <AlertCircle className="mx-auto mb-3" />
-                    {localEventSongs.length === 0
-                      ? "This event has no songs yet."
-                      : "No songs match your search."}
-                  </div>
-                ) : (
-                  <DndContext
-                    sensors={sensors}
-                    collisionDetection={closestCenter}
-                    onDragEnd={handleEventDragEnd}
-                  >
-                    <SortableContext
-                      items={filteredSongs.map(s => s.id)}
-                      strategy={rectSortingStrategy}
+                <div className="flex items-center gap-1.5">
+                  {selectedEventId && (
+                    <button
+                      onClick={() => setShowAddSongs(true)}
+                      className="rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-bold text-white whitespace-nowrap"
                     >
-                      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                        {filteredSongs.map(song => {
-                          const isLive = activeSongId === song.id;
-                          const isStaged = stagedId === song.id;
-                          const hasPlayed = playedSongIds.includes(song.id);
-                          return (
-                            <SortableSongTile
-                              key={song.id}
-                              song={song}
-                              isLive={isLive}
-                              isStaged={isStaged}
-                              hasPlayedThisSession={hasPlayed}
-                              onStage={stageSong}
-                              onEdit={(s) => setEditing(s)}
-                              onRemoveFromEvent={removeFromEvent}
-                              showRemoveFromEvent={true}
-                              isEventTab={true}
-                            />
-                          );
-                        })}
-                      </div>
-                    </SortableContext>
-                  </DndContext>
-                )}
-              </>
-            ) : (
-              <div className="py-16 text-center text-zinc-500">
-                Select an event to manage its setlist.
+                      + ADD SONGS
+                    </button>
+                  )}
+                  {selectedEventId && (
+                    <div className="relative">
+                      <button
+                        type="button"
+                        aria-label="Event actions"
+                        title="Event actions"
+                        onClick={() => setIsEventActionsOpen(!isEventActionsOpen)}
+                        className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/10 bg-zinc-800 text-zinc-200 transition-colors hover:bg-zinc-700 active:scale-95"
+                      >
+                        <MoreVertical size={17} />
+                      </button>
+                      {isEventActionsOpen && (
+                        <div className="absolute right-0 top-full z-30 mt-1 w-40 overflow-hidden rounded-xl border border-white/10 bg-zinc-900 p-1 shadow-2xl">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setIsEventActionsOpen(false);
+                              const ev = events.find(e => e.id === selectedEventId);
+                              if (ev) setEditingEvent(ev);
+                            }}
+                            className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-zinc-200 hover:bg-zinc-800"
+                          >
+                            <Pencil size={14} />
+                            Rename Event
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setIsEventActionsOpen(false);
+                              deleteEvent();
+                            }}
+                            className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-red-400 hover:bg-red-500/10"
+                          >
+                            <Trash2 size={14} />
+                            Delete Event
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
-            )}
+
+              {/* Setlist content */}
+              {selectedEventId ? (
+                <>
+                  <div className="mb-4">
+                    <input
+                      value={query}
+                      onChange={(e) => setQuery(e.target.value)}
+                      placeholder="Search event setlist..."
+                      className="w-full rounded-xl border border-white/10 bg-white/5 p-4 text-white outline-none focus:border-blue-500"
+                    />
+                  </div>
+
+                  {filteredSongs.length === 0 ? (
+                    <div className="py-16 text-center text-zinc-500">
+                      <AlertCircle className="mx-auto mb-3" />
+                      {localEventSongs.length === 0
+                        ? "This event has no songs yet."
+                        : "No songs match your search."}
+                    </div>
+                  ) : (
+                    <DndContext
+                      sensors={sensors}
+                      collisionDetection={closestCenter}
+                      onDragEnd={handleEventDragEnd}
+                    >
+                      <SortableContext
+                        items={filteredSongs.map(s => s.id)}
+                        strategy={rectSortingStrategy}
+                      >
+                        <div
+                          className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3"
+                          style={{ touchAction: 'pan-y' }}
+                        >
+                          {filteredSongs.map(song => {
+                            const isLive = activeSongId === song.id;
+                            const isStaged = stagedId === song.id;
+                            const hasPlayed = playedSongIds.includes(song.id);
+                            return (
+                              <SortableSongTile
+                                key={song.id}
+                                song={song}
+                                isLive={isLive}
+                                isStaged={isStaged}
+                                hasPlayedThisSession={hasPlayed}
+                                onStage={stageSong}
+                                onEdit={(s) => setEditing(s)}
+                                onRemoveFromEvent={removeFromEvent}
+                                showRemoveFromEvent={true}
+                                isEventTab={true}
+                                showEdit={false}
+                              />
+                            );
+                          })}
+                        </div>
+                      </SortableContext>
+                    </DndContext>
+                  )}
+                </>
+              ) : (
+                <div className="py-16 text-center text-zinc-500">
+                  Select an event to manage its setlist.
+                </div>
+              )}
+            </div>
           </div>
         )}
 
@@ -1407,7 +1541,6 @@ function AdminPanel({
               </button>
             </div>
 
-            {/* Search */}
             <div className="mb-4">
               <input
                 value={query}
@@ -1444,11 +1577,12 @@ function AdminPanel({
                           isLive={isLive}
                           isStaged={isStaged}
                           hasPlayedThisSession={hasPlayed}
-                          onStage={() => {}} // no staging in library tab
+                          onStage={() => {}}
                           onEdit={(s) => setEditing(s)}
                           onDelete={deleteLibrarySong}
                           showRemoveFromEvent={false}
                           isEventTab={false}
+                          showEdit={true}
                         />
                       );
                     })}
@@ -1482,7 +1616,6 @@ function AdminPanel({
                   if (error) throw error;
                 }
                 await refreshSongs();
-                // If in events tab and event selected, refresh event songs as well
                 if (activeTab === "events" && selectedEventId) {
                   await refreshEventSongs(selectedEventId);
                 }
