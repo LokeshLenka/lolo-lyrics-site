@@ -16,6 +16,8 @@
     "@dnd-kit/utilities": "^3.2.2",
     "@supabase/supabase-js": "^2.112.4",
     "@tailwindcss/vite": "^4.1.18",
+    "@vercel/analytics": "^2.0.1",
+    "@vercel/speed-insights": "^2.0.0",
     "clsx": "^2.1.1",
     "framer-motion": "^12.23.26",
     "lucide-react": "^0.576.0",
