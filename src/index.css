@@ -1,29 +1,126 @@
 @import "tailwindcss";
 
 @theme {
-  --font-sans: "Inter", "Poppins", sans-serif;
+  --font-sans: "Sora", "Noto Sans Telugu", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  /* Logo-derived midnight surfaces with subtle violet undertones */
+  --color-console: #08070b;
+  --color-panel: #100d16;
+  --color-raised: #1a1421;
+  --color-hairline: #f3e8ff18;
+  --color-hairline-strong: #f3e8ff36;
+  --color-scrollbar-thumb: #493252;
+  --color-scrollbar-thumb-hover: #65446f;
+
+  /* Ink */
+  --color-ink: #f8f4fb;
+  --color-ink-2: #cec1d5;
+  --color-ink-3: #a394aa;
+
+  /* Primary brand glow and the logo's secondary neon */
+  --color-lamp: #e040fc;
+  --color-lamp-soft: #e040fc26;
+  --color-lamp-ink: #08070b;
+  --color-brand-cyan: #7fd7fd;
+  --color-brand-cyan-soft: #7fd7fd24;
+
+  /* Live/connected, staged, and destructive states */
+  --color-signal-ok: #7fd7fd;
+  --color-signal-warn: #e040fc;
+  --color-signal-bad: #ff5964;
 }
 
 :root {
-  background-color: #050505;
-  color: #ffffff;
+  background-color: var(--color-console);
+  color: var(--color-ink);
   color-scheme: dark;
+  caret-color: var(--color-lamp);
+
+  /* Browser surfaces belong to the design too */
+  ::selection {
+    background: var(--color-lamp);
+    color: var(--color-lamp-ink);
+  }
+
+  scrollbar-color: var(--color-scrollbar-thumb) transparent;
+  scrollbar-width: thin;
 }
 
 body {
   margin: 0;
-  padding: 0;
+  font-size: 15px;
   font-family: var(--font-sans);
+  font-feature-settings: "ss01";
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  background: var(--color-console);
 }
 
-/* --- Enterprise Utilities --- */
+/* Keep interface copy comfortable at a glance; mono micro-labels stay compact. */
+[class~="text-[13px]"] {
+  font-size: 15px !important;
+  line-height: 1.5;
+}
 
-/* Completely hide scrollbars globally for a native-app feel */
+[class~="text-[12px]"] {
+  font-size: 14px !important;
+  line-height: 1.5;
+}
+
+* {
+  scrollbar-color: var(--color-scrollbar-thumb) transparent;
+  scrollbar-width: thin;
+}
+
+/* Square geometry is the product-wide shape rule. */
+*,
+*::before,
+*::after {
+  border-radius: 0 !important;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-scrollbar-thumb);
+  border: 3px solid transparent;
+  border-radius: 999px;
+  background-clip: content-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-scrollbar-thumb-hover);
+  background-clip: content-box;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-lamp);
+  outline-offset: 3px;
+}
+
+button, input, select, textarea { font: inherit; }
+
+::placeholder { color: var(--color-ink-3); opacity: 1; }
+
+/* Console hardware: numeric readouts stay in columns */
+.tnum {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
 .no-scrollbar::-webkit-scrollbar {
   display: none;
 }
+
 .no-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;
@@ -45,4 +142,15 @@ body {
     black 90%,
     transparent 100%
   );
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

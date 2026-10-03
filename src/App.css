@@ -1,42 +1,41 @@
-#root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
-}
+#root { min-height: 100dvh; }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
+/* LOLOSYNC / logo-lit midnight control room */
+.admin-shell {
+  background-color: var(--color-console);
+  background-image: radial-gradient(ellipse at 92% 0%, color-mix(in srgb, var(--color-lamp) 5%, transparent), transparent 42%),
+    radial-gradient(ellipse at 4% 100%, color-mix(in srgb, var(--color-brand-cyan) 3%, transparent), transparent 38%);
 }
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
+.admin-rail { background: #0d0a12; border-color: var(--color-hairline); }
+.admin-rail::after {
+  content: "";
+  position: absolute;
+  inset: 0 0 0 auto;
+  width: 1px;
+  background: linear-gradient(to bottom, transparent 4%, var(--color-lamp) 34%, var(--color-brand-cyan) 62%, var(--color-lamp) 84%, transparent);
 }
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
+.admin-topbar { background: rgb(8 7 11 / 94%); border-color: var(--color-hairline); }
+.admin-content { max-width: 1360px; }
+.brand-mark { letter-spacing: -.055em; }
+.brand-mark em { color: var(--color-lamp); font-style: normal; }
+.console-kicker { color: var(--color-ink-3); letter-spacing: .18em; }
+.console-rule { border-color: var(--color-hairline); }
+.console-panel { background: var(--color-panel); border-color: var(--color-hairline); border-radius: 10px; }
+.console-panel > div:first-child { border-color: var(--color-hairline); }
+.console-stat { background: linear-gradient(145deg, var(--color-panel), #0d0a12); border-color: var(--color-hairline); border-radius: 10px; }
+.console-stat:first-child { border-top-color: var(--color-lamp); }
+.console-input { background: var(--color-console); border-color: var(--color-hairline-strong); border-radius: 6px; }
+.console-input:focus { border-color: color-mix(in srgb, var(--color-lamp) 60%, transparent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-lamp) 9%, transparent); }
+.live-marker { box-shadow: 0 0 0 5px color-mix(in srgb, var(--color-brand-cyan) 9%, transparent); }
+.audience-idle { background: radial-gradient(circle at 36% 42%, color-mix(in srgb, var(--color-lamp) 14%, transparent) 0, transparent 34%), radial-gradient(circle at 68% 58%, color-mix(in srgb, var(--color-brand-cyan) 10%, transparent) 0, var(--color-console) 52%); }
+.login-glow {
+  background: radial-gradient(ellipse at 50% 0%, color-mix(in srgb, var(--color-lamp) 14%, transparent) 0, transparent 44%),
+    radial-gradient(ellipse at 84% 18%, color-mix(in srgb, var(--color-brand-cyan) 7%, transparent) 0, transparent 46%);
 }
+.audience-live { position: relative; overflow: hidden; }
+.audience-live::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(90deg, rgba(0,0,0,.58), rgba(0,0,0,.15) 55%, rgba(0,0,0,.52)); }
+.audience-content { position: relative; z-index: 1; }
 
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
-  }
-}
-
-.card {
-  padding: 2em;
-}
-
-.read-the-docs {
-  color: #888;
+@media (max-width: 639px) {
+  .admin-content { padding-top: 1.25rem; }
 }

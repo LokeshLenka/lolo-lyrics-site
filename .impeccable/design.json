@@ -1,0 +1,740 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-03T07:26:17Z",
+  "title": "Design System: LOLOSYNC",
+  "extensions": {
+    "colorMeta": {
+      "console": {
+        "role": "neutral",
+        "displayName": "Console Black",
+        "canonical": "oklch(0.150 0.002 286.1)",
+        "tonalRamp": [
+          "oklch(0.150 0.000 286.1)",
+          "oklch(0.264 0.001 286.1)",
+          "oklch(0.379 0.001 286.1)",
+          "oklch(0.493 0.002 286.1)",
+          "oklch(0.607 0.002 286.1)",
+          "oklch(0.721 0.002 286.1)",
+          "oklch(0.836 0.002 286.1)",
+          "oklch(0.950 0.000 286.1)"
+        ]
+      },
+      "panel": {
+        "role": "neutral",
+        "displayName": "Panel",
+        "canonical": "oklch(0.184 0.006 285.8)",
+        "tonalRamp": [
+          "oklch(0.150 0.001 285.8)",
+          "oklch(0.264 0.002 285.8)",
+          "oklch(0.379 0.003 285.8)",
+          "oklch(0.493 0.005 285.8)",
+          "oklch(0.607 0.006 285.8)",
+          "oklch(0.721 0.006 285.8)",
+          "oklch(0.836 0.006 285.8)",
+          "oklch(0.950 0.001 285.8)"
+        ]
+      },
+      "raised": {
+        "role": "neutral",
+        "displayName": "Raised",
+        "canonical": "oklch(0.217 0.014 285.2)",
+        "tonalRamp": [
+          "oklch(0.150 0.002 285.2)",
+          "oklch(0.264 0.005 285.2)",
+          "oklch(0.379 0.008 285.2)",
+          "oklch(0.493 0.011 285.2)",
+          "oklch(0.607 0.014 285.2)",
+          "oklch(0.721 0.014 285.2)",
+          "oklch(0.836 0.012 285.2)",
+          "oklch(0.950 0.002 285.2)"
+        ]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Ink",
+        "canonical": "oklch(0.967 0.001 286.4)",
+        "tonalRamp": [
+          "oklch(0.150 0.000 286.4)",
+          "oklch(0.264 0.000 286.4)",
+          "oklch(0.379 0.001 286.4)",
+          "oklch(0.493 0.001 286.4)",
+          "oklch(0.607 0.001 286.4)",
+          "oklch(0.721 0.001 286.4)",
+          "oklch(0.836 0.001 286.4)",
+          "oklch(0.950 0.000 286.4)"
+        ]
+      },
+      "ink-muted": {
+        "role": "neutral",
+        "displayName": "Ink Muted",
+        "canonical": "oklch(0.735 0.016 286.0)",
+        "tonalRamp": [
+          "oklch(0.150 0.003 286.0)",
+          "oklch(0.264 0.006 286.0)",
+          "oklch(0.379 0.009 286.0)",
+          "oklch(0.493 0.013 286.0)",
+          "oklch(0.607 0.016 286.0)",
+          "oklch(0.721 0.016 286.0)",
+          "oklch(0.836 0.014 286.0)",
+          "oklch(0.950 0.002 286.0)"
+        ]
+      },
+      "ink-faint": {
+        "role": "neutral",
+        "displayName": "Ink Faint",
+        "canonical": "oklch(0.620 0.015 286.0)",
+        "tonalRamp": [
+          "oklch(0.150 0.003 286.0)",
+          "oklch(0.264 0.005 286.0)",
+          "oklch(0.379 0.009 286.0)",
+          "oklch(0.493 0.012 286.0)",
+          "oklch(0.607 0.015 286.0)",
+          "oklch(0.721 0.015 286.0)",
+          "oklch(0.836 0.014 286.0)",
+          "oklch(0.950 0.002 286.0)"
+        ]
+      },
+      "stage-lamp-amber": {
+        "role": "primary",
+        "displayName": "Stage-Lamp Amber",
+        "canonical": "oklch(0.785 0.146 73.8)",
+        "tonalRamp": [
+          "oklch(0.150 0.026 73.8)",
+          "oklch(0.264 0.052 73.8)",
+          "oklch(0.379 0.084 73.8)",
+          "oklch(0.493 0.120 73.8)",
+          "oklch(0.607 0.146 73.8)",
+          "oklch(0.721 0.146 73.8)",
+          "oklch(0.836 0.133 73.8)",
+          "oklch(0.950 0.020 73.8)"
+        ]
+      },
+      "stage-lamp-ink": {
+        "role": "primary",
+        "displayName": "Amber Ink",
+        "canonical": "oklch(0.189 0.026 77.5)",
+        "tonalRamp": [
+          "oklch(0.150 0.005 77.5)",
+          "oklch(0.264 0.009 77.5)",
+          "oklch(0.379 0.015 77.5)",
+          "oklch(0.493 0.021 77.5)",
+          "oklch(0.607 0.026 77.5)",
+          "oklch(0.721 0.026 77.5)",
+          "oklch(0.836 0.024 77.5)",
+          "oklch(0.950 0.004 77.5)"
+        ]
+      },
+      "signal-ok": {
+        "role": "status",
+        "displayName": "Signal Ok",
+        "canonical": "oklch(0.706 0.092 151.2)",
+        "tonalRamp": [
+          "oklch(0.150 0.017 151.2)",
+          "oklch(0.264 0.033 151.2)",
+          "oklch(0.379 0.053 151.2)",
+          "oklch(0.493 0.076 151.2)",
+          "oklch(0.607 0.092 151.2)",
+          "oklch(0.721 0.092 151.2)",
+          "oklch(0.836 0.084 151.2)",
+          "oklch(0.950 0.013 151.2)"
+        ]
+      },
+      "signal-warn": {
+        "role": "status",
+        "displayName": "Signal Warn",
+        "canonical": "oklch(0.744 0.130 78.5)",
+        "tonalRamp": [
+          "oklch(0.150 0.023 78.5)",
+          "oklch(0.264 0.047 78.5)",
+          "oklch(0.379 0.074 78.5)",
+          "oklch(0.493 0.107 78.5)",
+          "oklch(0.607 0.130 78.5)",
+          "oklch(0.721 0.130 78.5)",
+          "oklch(0.836 0.118 78.5)",
+          "oklch(0.950 0.018 78.5)"
+        ]
+      },
+      "signal-bad": {
+        "role": "status",
+        "displayName": "Signal Bad",
+        "canonical": "oklch(0.615 0.135 25.1)",
+        "tonalRamp": [
+          "oklch(0.150 0.024 25.1)",
+          "oklch(0.264 0.049 25.1)",
+          "oklch(0.379 0.078 25.1)",
+          "oklch(0.493 0.111 25.1)",
+          "oklch(0.607 0.135 25.1)",
+          "oklch(0.721 0.135 25.1)",
+          "oklch(0.836 0.123 25.1)",
+          "oklch(0.950 0.019 25.1)"
+        ]
+      },
+      "scrollbar-thumb": {
+        "role": "neutral",
+        "displayName": "Scrollbar Thumb",
+        "canonical": "oklch(0.292 0.014 285.5)",
+        "tonalRamp": [
+          "oklch(0.150 0.003 285.5)",
+          "oklch(0.264 0.005 285.5)",
+          "oklch(0.379 0.008 285.5)",
+          "oklch(0.493 0.012 285.5)",
+          "oklch(0.607 0.014 285.5)",
+          "oklch(0.721 0.014 285.5)",
+          "oklch(0.836 0.013 285.5)",
+          "oklch(0.950 0.002 285.5)"
+        ]
+      },
+      "scrollbar-thumb-hover": {
+        "role": "neutral",
+        "displayName": "Scrollbar Thumb Hover",
+        "canonical": "oklch(0.353 0.019 285.4)",
+        "tonalRamp": [
+          "oklch(0.150 0.003 285.4)",
+          "oklch(0.264 0.007 285.4)",
+          "oklch(0.379 0.011 285.4)",
+          "oklch(0.493 0.016 285.4)",
+          "oklch(0.607 0.019 285.4)",
+          "oklch(0.721 0.019 285.4)",
+          "oklch(0.836 0.017 285.4)",
+          "oklch(0.950 0.003 285.4)"
+        ]
+      },
+      "gradient-slate": {
+        "role": "gradient",
+        "displayName": "Song gradient stop - slate",
+        "canonical": "oklch(0.129 0.041 264.7)",
+        "tonalRamp": [
+          "oklch(0.150 0.007 264.7)",
+          "oklch(0.264 0.015 264.7)",
+          "oklch(0.379 0.023 264.7)",
+          "oklch(0.493 0.033 264.7)",
+          "oklch(0.607 0.041 264.7)",
+          "oklch(0.721 0.041 264.7)",
+          "oklch(0.836 0.037 264.7)",
+          "oklch(0.950 0.006 264.7)"
+        ]
+      },
+      "gradient-blue": {
+        "role": "gradient",
+        "displayName": "Song gradient stop - blue",
+        "canonical": "oklch(0.282 0.087 267.9)",
+        "tonalRamp": [
+          "oklch(0.150 0.016 267.9)",
+          "oklch(0.264 0.031 267.9)",
+          "oklch(0.379 0.050 267.9)",
+          "oklch(0.493 0.072 267.9)",
+          "oklch(0.607 0.087 267.9)",
+          "oklch(0.721 0.087 267.9)",
+          "oklch(0.836 0.080 267.9)",
+          "oklch(0.950 0.012 267.9)"
+        ]
+      },
+      "gradient-indigo": {
+        "role": "gradient",
+        "displayName": "Song gradient stop - indigo",
+        "canonical": "oklch(0.359 0.135 278.7)",
+        "tonalRamp": [
+          "oklch(0.150 0.024 278.7)",
+          "oklch(0.264 0.049 278.7)",
+          "oklch(0.379 0.078 278.7)",
+          "oklch(0.493 0.112 278.7)",
+          "oklch(0.607 0.135 278.7)",
+          "oklch(0.721 0.135 278.7)",
+          "oklch(0.836 0.124 278.7)",
+          "oklch(0.950 0.019 278.7)"
+        ]
+      },
+      "gradient-zinc": {
+        "role": "gradient",
+        "displayName": "Song gradient stop - zinc",
+        "canonical": "oklch(0.141 0.004 285.8)",
+        "tonalRamp": [
+          "oklch(0.150 0.001 285.8)",
+          "oklch(0.264 0.002 285.8)",
+          "oklch(0.379 0.003 285.8)",
+          "oklch(0.493 0.004 285.8)",
+          "oklch(0.607 0.004 285.8)",
+          "oklch(0.721 0.004 285.8)",
+          "oklch(0.836 0.004 285.8)",
+          "oklch(0.950 0.001 285.8)"
+        ]
+      },
+      "gradient-fuchsia": {
+        "role": "gradient",
+        "displayName": "Song gradient stop - fuchsia",
+        "canonical": "oklch(0.293 0.131 325.7)",
+        "tonalRamp": [
+          "oklch(0.150 0.024 325.7)",
+          "oklch(0.264 0.047 325.7)",
+          "oklch(0.379 0.075 325.7)",
+          "oklch(0.493 0.108 325.7)",
+          "oklch(0.607 0.131 325.7)",
+          "oklch(0.721 0.131 325.7)",
+          "oklch(0.836 0.119 325.7)",
+          "oklch(0.950 0.018 325.7)"
+        ]
+      },
+      "gradient-pink": {
+        "role": "gradient",
+        "displayName": "Song gradient stop - pink",
+        "canonical": "oklch(0.284 0.105 3.9)",
+        "tonalRamp": [
+          "oklch(0.150 0.019 3.9)",
+          "oklch(0.264 0.038 3.9)",
+          "oklch(0.379 0.060 3.9)",
+          "oklch(0.493 0.086 3.9)",
+          "oklch(0.607 0.105 3.9)",
+          "oklch(0.721 0.105 3.9)",
+          "oklch(0.836 0.096 3.9)",
+          "oklch(0.950 0.015 3.9)"
+        ]
+      },
+      "gradient-gray": {
+        "role": "gradient",
+        "displayName": "Song gradient stop - gray",
+        "canonical": "oklch(0.130 0.027 261.7)",
+        "tonalRamp": [
+          "oklch(0.150 0.005 261.7)",
+          "oklch(0.264 0.010 261.7)",
+          "oklch(0.379 0.016 261.7)",
+          "oklch(0.493 0.023 261.7)",
+          "oklch(0.607 0.027 261.7)",
+          "oklch(0.721 0.027 261.7)",
+          "oklch(0.836 0.025 261.7)",
+          "oklch(0.950 0.004 261.7)"
+        ]
+      },
+      "gradient-amber": {
+        "role": "gradient",
+        "displayName": "Song gradient stop - amber",
+        "canonical": "oklch(0.279 0.074 45.6)",
+        "tonalRamp": [
+          "oklch(0.150 0.013 45.6)",
+          "oklch(0.264 0.027 45.6)",
+          "oklch(0.379 0.043 45.6)",
+          "oklch(0.493 0.061 45.6)",
+          "oklch(0.607 0.074 45.6)",
+          "oklch(0.721 0.074 45.6)",
+          "oklch(0.836 0.068 45.6)",
+          "oklch(0.950 0.010 45.6)"
+        ]
+      },
+      "gradient-orange": {
+        "role": "gradient",
+        "displayName": "Song gradient stop - orange",
+        "canonical": "oklch(0.266 0.076 36.3)",
+        "tonalRamp": [
+          "oklch(0.150 0.014 36.3)",
+          "oklch(0.264 0.027 36.3)",
+          "oklch(0.379 0.044 36.3)",
+          "oklch(0.493 0.063 36.3)",
+          "oklch(0.607 0.076 36.3)",
+          "oklch(0.721 0.076 36.3)",
+          "oklch(0.836 0.070 36.3)",
+          "oklch(0.950 0.011 36.3)"
+        ]
+      },
+      "gradient-neutral": {
+        "role": "gradient",
+        "displayName": "Song gradient stop - neutral",
+        "canonical": "oklch(0.145 0.000 89.9)",
+        "tonalRamp": [
+          "oklch(0.150 0.000 89.9)",
+          "oklch(0.264 0.000 89.9)",
+          "oklch(0.379 0.000 89.9)",
+          "oklch(0.493 0.000 89.9)",
+          "oklch(0.607 0.000 89.9)",
+          "oklch(0.721 0.000 89.9)",
+          "oklch(0.836 0.000 89.9)",
+          "oklch(0.950 0.000 89.9)"
+        ]
+      },
+      "gradient-violet": {
+        "role": "gradient",
+        "displayName": "Song gradient stop - violet",
+        "canonical": "oklch(0.283 0.135 291.1)",
+        "tonalRamp": [
+          "oklch(0.150 0.024 291.1)",
+          "oklch(0.264 0.049 291.1)",
+          "oklch(0.379 0.078 291.1)",
+          "oklch(0.493 0.111 291.1)",
+          "oklch(0.607 0.135 291.1)",
+          "oklch(0.721 0.135 291.1)",
+          "oklch(0.836 0.123 291.1)",
+          "oklch(0.950 0.019 291.1)"
+        ]
+      },
+      "gradient-purple": {
+        "role": "gradient",
+        "displayName": "Song gradient stop - purple",
+        "canonical": "oklch(0.291 0.143 302.7)",
+        "tonalRamp": [
+          "oklch(0.150 0.026 302.7)",
+          "oklch(0.264 0.052 302.7)",
+          "oklch(0.379 0.082 302.7)",
+          "oklch(0.493 0.118 302.7)",
+          "oklch(0.607 0.143 302.7)",
+          "oklch(0.721 0.143 302.7)",
+          "oklch(0.836 0.131 302.7)",
+          "oklch(0.950 0.020 302.7)"
+        ]
+      },
+      "gradient-stone": {
+        "role": "gradient",
+        "displayName": "Song gradient stop - stone",
+        "canonical": "oklch(0.147 0.004 49.2)",
+        "tonalRamp": [
+          "oklch(0.150 0.001 49.2)",
+          "oklch(0.264 0.001 49.2)",
+          "oklch(0.379 0.002 49.2)",
+          "oklch(0.493 0.003 49.2)",
+          "oklch(0.607 0.004 49.2)",
+          "oklch(0.721 0.004 49.2)",
+          "oklch(0.836 0.004 49.2)",
+          "oklch(0.950 0.001 49.2)"
+        ]
+      },
+      "gradient-red": {
+        "role": "gradient",
+        "displayName": "Song gradient stop - red",
+        "canonical": "oklch(0.258 0.089 26.0)",
+        "tonalRamp": [
+          "oklch(0.150 0.016 26.0)",
+          "oklch(0.264 0.032 26.0)",
+          "oklch(0.379 0.051 26.0)",
+          "oklch(0.493 0.073 26.0)",
+          "oklch(0.607 0.089 26.0)",
+          "oklch(0.721 0.089 26.0)",
+          "oklch(0.836 0.081 26.0)",
+          "oklch(0.950 0.012 26.0)"
+        ]
+      },
+      "gradient-rose": {
+        "role": "gradient",
+        "displayName": "Song gradient stop - rose",
+        "canonical": "oklch(0.271 0.101 12.1)",
+        "tonalRamp": [
+          "oklch(0.150 0.018 12.1)",
+          "oklch(0.264 0.036 12.1)",
+          "oklch(0.379 0.058 12.1)",
+          "oklch(0.493 0.083 12.1)",
+          "oklch(0.607 0.101 12.1)",
+          "oklch(0.721 0.101 12.1)",
+          "oklch(0.836 0.092 12.1)",
+          "oklch(0.950 0.014 12.1)"
+        ]
+      },
+      "gradient-emerald": {
+        "role": "gradient",
+        "displayName": "Song gradient stop - emerald",
+        "canonical": "oklch(0.262 0.049 172.6)",
+        "tonalRamp": [
+          "oklch(0.150 0.009 172.6)",
+          "oklch(0.264 0.018 172.6)",
+          "oklch(0.379 0.028 172.6)",
+          "oklch(0.493 0.040 172.6)",
+          "oklch(0.607 0.049 172.6)",
+          "oklch(0.721 0.049 172.6)",
+          "oklch(0.836 0.044 172.6)",
+          "oklch(0.950 0.007 172.6)"
+        ]
+      },
+      "gradient-teal": {
+        "role": "gradient",
+        "displayName": "Song gradient stop - teal",
+        "canonical": "oklch(0.277 0.045 192.5)",
+        "tonalRamp": [
+          "oklch(0.150 0.008 192.5)",
+          "oklch(0.264 0.016 192.5)",
+          "oklch(0.379 0.026 192.5)",
+          "oklch(0.493 0.037 192.5)",
+          "oklch(0.607 0.045 192.5)",
+          "oklch(0.721 0.045 192.5)",
+          "oklch(0.836 0.041 192.5)",
+          "oklch(0.950 0.006 192.5)"
+        ]
+      },
+      "gradient-cyan": {
+        "role": "gradient",
+        "displayName": "Song gradient stop - cyan",
+        "canonical": "oklch(0.302 0.054 229.7)",
+        "tonalRamp": [
+          "oklch(0.150 0.010 229.7)",
+          "oklch(0.264 0.019 229.7)",
+          "oklch(0.379 0.031 229.7)",
+          "oklch(0.493 0.045 229.7)",
+          "oklch(0.607 0.054 229.7)",
+          "oklch(0.721 0.054 229.7)",
+          "oklch(0.836 0.049 229.7)",
+          "oklch(0.950 0.008 229.7)"
+        ]
+      },
+      "hairline": {
+        "role": "neutral",
+        "displayName": "Hairline",
+        "canonical": "rgba(255,255,255,0.078)",
+        "tonalRamp": [
+          "rgba(255,255,255,0.04)",
+          "rgba(255,255,255,0.06)",
+          "rgba(255,255,255,0.078)",
+          "rgba(255,255,255,0.1)",
+          "rgba(255,255,255,0.13)",
+          "rgba(255,255,255,0.17)",
+          "rgba(255,255,255,0.22)",
+          "rgba(255,255,255,0.3)"
+        ]
+      },
+      "hairline-strong": {
+        "role": "neutral",
+        "displayName": "Hairline Strong",
+        "canonical": "rgba(255,255,255,0.169)",
+        "tonalRamp": [
+          "rgba(255,255,255,0.06)",
+          "rgba(255,255,255,0.1)",
+          "rgba(255,255,255,0.13)",
+          "rgba(255,255,255,0.169)",
+          "rgba(255,255,255,0.22)",
+          "rgba(255,255,255,0.28)",
+          "rgba(255,255,255,0.36)",
+          "rgba(255,255,255,0.48)"
+        ]
+      },
+      "stage-lamp-soft": {
+        "role": "primary",
+        "displayName": "Stage-Lamp Soft",
+        "canonical": "rgba(240,169,59,0.149)",
+        "tonalRamp": [
+          "rgba(240,169,59,0.06)",
+          "rgba(240,169,59,0.1)",
+          "rgba(240,169,59,0.149)",
+          "rgba(240,169,59,0.2)",
+          "rgba(240,169,59,0.3)",
+          "rgba(240,169,59,0.45)",
+          "rgba(240,169,59,0.65)",
+          "rgba(240,169,59,0.85)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Audience song title — the largest type in the product."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Screen titles in the top bar, dialog and sheet headings."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Descriptions, helper copy, confirm text; also the 13px document default."
+      },
+      "body-sm": {
+        "displayName": "Body small",
+        "purpose": "Inputs, table titles, large button labels."
+      },
+      "meta": {
+        "displayName": "Meta",
+        "purpose": "Secondary labels, small inputs and buttons, table ordinals."
+      },
+      "micro": {
+        "displayName": "Micro",
+        "purpose": "Key caps and the smallest counters."
+      },
+      "wordmark": {
+        "displayName": "Wordmark",
+        "purpose": "The LOLOSYNC mark in the sidebar and sign-in card."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Panel titles — the working size of section headings."
+      },
+      "control": {
+        "displayName": "Control",
+        "purpose": "Buttons and nav items."
+      },
+      "readout": {
+        "displayName": "Readout",
+        "purpose": "Counts, dates, line totals — tabular mono."
+      },
+      "micro-label": {
+        "displayName": "Micro label",
+        "purpose": "Lamps, filter labels, wordmark line."
+      }
+    },
+    "shadows": [],
+    "motion": [
+      {
+        "name": "ease-standard",
+        "value": "cubic-bezier(0.16, 1, 0.3, 1)",
+        "purpose": "Panel, sheet and dialog cross-fades (180–550ms)."
+      },
+      {
+        "name": "duration-press",
+        "value": "150ms",
+        "purpose": "Colour transitions and the active scale(0.985) press feedback."
+      },
+      {
+        "name": "reduced-motion",
+        "value": "0.01ms",
+        "purpose": "prefers-reduced-motion collapses every duration and stops lamp pulses."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "sm",
+        "value": "640px"
+      },
+      {
+        "name": "lg",
+        "value": "1024px"
+      },
+      {
+        "name": "xl",
+        "value": "1280px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Button — Lamp",
+      "kind": "button",
+      "refersTo": "button-lamp",
+      "description": "The one primary action: Go live, Add to library. Amber fill, dark ink, press feedback.",
+      "html": "<button class=\"ds-btn-lamp\">Go live</button>",
+      "css": ".ds-btn-lamp{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:40px;padding:0 14px;border:1px solid transparent;border-radius:0;background:#f0a93b;color:#1a1206;font-family:Sora,\"Noto Sans Telugu\",ui-sans-serif,system-ui,sans-serif;font-size:13px;font-weight:600;line-height:1.4;white-space:nowrap;cursor:pointer;transition:background-color 150ms,color 150ms,border-color 150ms,transform 150ms}\n.ds-btn-lamp:hover{background:rgba(240,169,59,.9)}\n.ds-btn-lamp:active{transform:scale(.985)}\n.ds-btn-lamp:focus-visible{outline:2px solid #f0a93b;outline-offset:2px}\n.ds-btn-lamp:disabled{opacity:.4;pointer-events:none}"
+    },
+    {
+      "name": "Button — Quiet",
+      "kind": "button",
+      "refersTo": "button-quiet",
+      "description": "The default control: Manage, Add songs, New song, Keep it. Raised surface, hairline border.",
+      "html": "<button class=\"ds-btn-quiet\">Add songs</button>",
+      "css": ".ds-btn-quiet{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:40px;padding:0 14px;border:1px solid rgba(255,255,255,.078);border-radius:0;background:#191920;color:#f4f4f5;font-family:Sora,\"Noto Sans Telugu\",ui-sans-serif,system-ui,sans-serif;font-size:13px;font-weight:500;line-height:1.4;white-space:nowrap;cursor:pointer;transition:background-color 150ms,color 150ms,border-color 150ms,transform 150ms}\n.ds-btn-quiet:hover{border-color:rgba(255,255,255,.169);background:rgba(25,25,32,.7)}\n.ds-btn-quiet:active{transform:scale(.985)}\n.ds-btn-quiet:focus-visible{outline:2px solid #f0a93b;outline-offset:2px}\n.ds-btn-quiet:disabled{opacity:.4;pointer-events:none}"
+    },
+    {
+      "name": "Button — Danger",
+      "kind": "button",
+      "refersTo": "button-danger",
+      "description": "Destructive and stage-level actions: Blackout stage, Delete song. Never a solid red fill.",
+      "html": "<button class=\"ds-btn-danger\"><svg width=\"17\" height=\"17\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z\"/><path d=\"M12 8v4\"/><path d=\"M12 16h.01\"/></svg>Blackout stage</button>",
+      "css": ".ds-btn-danger{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:48px;padding:0 20px;border:1px solid rgba(201,96,90,.35);border-radius:0;background:rgba(201,96,90,.1);color:#c9605a;font-family:Sora,\"Noto Sans Telugu\",ui-sans-serif,system-ui,sans-serif;font-size:13px;font-weight:500;line-height:1.4;white-space:nowrap;cursor:pointer;transition:background-color 150ms,color 150ms,border-color 150ms,transform 150ms}\n.ds-btn-danger:hover{background:rgba(201,96,90,.2)}\n.ds-btn-danger:active{transform:scale(.985)}\n.ds-btn-danger:focus-visible{outline:2px solid #f0a93b;outline-offset:2px}"
+    },
+    {
+      "name": "Search field",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Recessed console-black field with an inline icon; focus shifts the border to amber.",
+      "html": "<label class=\"ds-field\"><span class=\"ds-field__label\">Search the running order</span><span class=\"ds-field__wrap\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\"><circle cx=\"11\" cy=\"11\" r=\"8\"/><path d=\"m21 21-4.3-4.3\"/></svg><input class=\"ds-input\" type=\"search\" placeholder=\"Search the running order\" aria-label=\"Search the running order\"></span></label>",
+      "css": ".ds-field{display:flex;flex-direction:column;gap:8px;font-family:Sora,\"Noto Sans Telugu\",ui-sans-serif,system-ui,sans-serif}\n.ds-field__label{font-family:\"IBM Plex Mono\",ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:#85858f}\n.ds-field__wrap{position:relative;display:block}\n.ds-field__wrap svg{position:absolute;top:50%;left:12px;transform:translateY(-50%);color:#85858f;pointer-events:none}\n.ds-input{width:100%;height:40px;padding:0 12px 0 36px;border:1px solid rgba(255,255,255,.078);border-radius:0;background:#0b0b0c;color:#f4f4f5;font-family:Sora,\"Noto Sans Telugu\",ui-sans-serif,system-ui,sans-serif;font-size:13px;caret-color:#f0a93b;transition:border-color 150ms}\n.ds-input::placeholder{color:#85858f}\n.ds-input:focus{outline:none;border-color:rgba(240,169,59,.6)}\n.ds-input:focus-visible{outline:2px solid #f0a93b;outline-offset:2px}"
+    },
+    {
+      "name": "Sidebar nav",
+      "kind": "nav",
+      "refersTo": "nav-item",
+      "description": "Four sections, icon plus label; the active section takes a raised pill and an amber icon.",
+      "html": "<nav class=\"ds-nav\" aria-label=\"Admin sections\"><button class=\"ds-navitem ds-navitem--active\" aria-current=\"page\">Dashboard</button><button class=\"ds-navitem\">Events</button><button class=\"ds-navitem\">Library</button><button class=\"ds-navitem\">Live</button></nav>",
+      "css": ".ds-nav{display:flex;flex-direction:column;gap:4px;font-family:Sora,\"Noto Sans Telugu\",ui-sans-serif,system-ui,sans-serif}\n.ds-navitem{display:flex;align-items:center;gap:12px;height:44px;padding:0 12px;border:0;border-radius:12px;background:transparent;color:#85858f;font-size:13px;font-weight:500;cursor:pointer;transition:color 150ms,background-color 150ms}\n.ds-navitem:hover{background:rgba(255,255,255,.04);color:#a8a8b3}\n.ds-navitem:focus-visible{outline:2px solid #f0a93b;outline-offset:2px}\n.ds-navitem--active{background:#191920;color:#f4f4f5}"
+    },
+    {
+      "name": "Stat card",
+      "kind": "custom",
+      "refersTo": "stat-card",
+      "description": "One number each: mono uppercase label, 28px value, one hint line. Stat cards differ by content, never decoration.",
+      "html": "<div class=\"ds-stat\"><p class=\"ds-stat__label\">Songs</p><p class=\"ds-stat__value\">30</p><p class=\"ds-stat__hint\">1634 lyric lines in the library</p></div>",
+      "css": ".ds-stat{border:1px solid rgba(255,255,255,.078);border-radius:16px;background:#121215;padding:16px 20px;font-family:Sora,\"Noto Sans Telugu\",ui-sans-serif,system-ui,sans-serif}\n.ds-stat__label{margin:0;font-family:\"IBM Plex Mono\",ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#85858f}\n.ds-stat__value{margin:8px 0 0;font-size:28px;line-height:1;font-weight:600;letter-spacing:-.02em;color:#f4f4f5;font-variant-numeric:tabular-nums}\n.ds-stat__hint{margin:6px 0 0;font-size:12px;color:#85858f}"
+    },
+    {
+      "name": "Data table",
+      "kind": "custom",
+      "refersTo": "data-table",
+      "description": "The working surface: hairline head rule with mono uppercase columns, hairline row rules, tabular facts, icon actions right-aligned.",
+      "html": "<table class=\"ds-table\"><thead><tr><th>Event</th><th>Created</th><th>Songs</th></tr></thead><tbody><tr><td>Sunday Service</td><td class=\"ds-num\">3 Oct 2026</td><td class=\"ds-num\">11 songs</td></tr><tr><td>Youth Evening</td><td class=\"ds-num\">24 Sept 2026</td><td class=\"ds-num\">3 songs</td></tr></tbody></table>",
+      "css": ".ds-table{width:100%;border-collapse:collapse;background:#121215;font-family:Sora,\"Noto Sans Telugu\",ui-sans-serif,system-ui,sans-serif;font-size:14px;color:#f4f4f5}\n.ds-table th{padding:10px 16px;border-bottom:1px solid rgba(255,255,255,.078);font-family:\"IBM Plex Mono\",ui-monospace,SFMono-Regular,Menlo,monospace;font-size:10px;font-weight:500;letter-spacing:.14em;text-transform:uppercase;color:#85858f;text-align:left}\n.ds-table td{padding:12px 16px;border-bottom:1px solid rgba(255,255,255,.078)}\n.ds-table tr:last-child td{border-bottom:0}\n.ds-table tbody tr{transition:background-color 150ms}\n.ds-table tbody tr:hover{background:rgba(255,255,255,.02)}\n.ds-num{font-family:\"IBM Plex Mono\",ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;color:#85858f;font-variant-numeric:tabular-nums;white-space:nowrap}"
+    },
+    {
+      "name": "Lamp",
+      "kind": "custom",
+      "refersTo": "",
+      "description": "Signature: a dot plus a word — the admin's entire state vocabulary. Never colour alone.",
+      "html": "<span class=\"ds-lamp ds-lamp--live\"><span class=\"ds-lamp__dot\"></span>Live</span>\n<span class=\"ds-lamp ds-lamp--next\"><span class=\"ds-lamp__dot\"></span>Staged</span>\n<span class=\"ds-lamp ds-lamp--idle\"><span class=\"ds-lamp__dot\"></span>Played</span>",
+      "css": ".ds-lamp{display:inline-flex;align-items:center;gap:8px;font-family:\"IBM Plex Mono\",ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;font-weight:500;line-height:1.4;letter-spacing:.14em;text-transform:uppercase}\n.ds-lamp__dot{width:6px;height:6px;border-radius:9999px;background:currentColor;flex:none}\n.ds-lamp--live{color:#f0a93b}\n.ds-lamp--live .ds-lamp__dot{animation:ds-lamp-pulse 1.6s ease-in-out infinite}\n.ds-lamp--next{color:#d8a13f}\n.ds-lamp--idle{color:#85858f}\n.ds-lamp--ok{color:#74b183}\n@keyframes ds-lamp-pulse{0%,100%{opacity:1}50%{opacity:.35}}\n@media (prefers-reduced-motion: reduce){.ds-lamp--live .ds-lamp__dot{animation:none}}"
+    },
+    {
+      "name": "Live queue row",
+      "kind": "custom",
+      "refersTo": "row-picker",
+      "description": "Signature: ordinal, title, Play plus move and remove. The live row takes an amber wash with a LIVE word; the staged row a white wash; played rows dim with a green check.",
+      "html": "<ul class=\"ds-queue\">\n  <li class=\"ds-qrow ds-qrow--live\"><span class=\"ds-qrow__ord\">01</span><span class=\"ds-qrow__title\">Nuvvunte Chaley <em>Live</em></span><span class=\"ds-qrow__play\">Play</span></li>\n  <li class=\"ds-qrow ds-qrow--staged\"><span class=\"ds-qrow__ord\">02</span><span class=\"ds-qrow__title\">Oy Oy</span><span class=\"ds-qrow__play ds-qrow__play--lamp\">Play</span></li>\n  <li class=\"ds-qrow\"><span class=\"ds-qrow__ord\">03</span><span class=\"ds-qrow__title\">Ammayi kitiki pakkana</span><span class=\"ds-qrow__play\">Play</span></li>\n</ul>",
+      "css": ".ds-queue{list-style:none;margin:0;padding:0;font-family:Sora,\"Noto Sans Telugu\",ui-sans-serif,system-ui,sans-serif}\n.ds-qrow{display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid rgba(255,255,255,.078);transition:background-color 150ms}\n.ds-qrow--live{background:rgba(240,169,59,.06)}\n.ds-qrow--staged{background:rgba(255,255,255,.045)}\n.ds-qrow__ord{width:24px;flex:none;font-family:\"IBM Plex Mono\",ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;font-variant-numeric:tabular-nums;color:#85858f}\n.ds-qrow--live .ds-qrow__ord{color:#f0a93b}\n.ds-qrow__title{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:14px;font-weight:500;color:#f4f4f5}\n.ds-qrow__title em{margin-left:8px;font-style:normal;font-family:\"IBM Plex Mono\",ui-monospace,SFMono-Regular,Menlo,monospace;font-size:10px;letter-spacing:.14em;color:#f0a93b}\n.ds-qrow__play{flex:none;border:1px solid rgba(255,255,255,.078);border-radius:9999px;background:#191920;padding:6px 12px;font-size:12px;font-weight:500;color:#f4f4f5}\n.ds-qrow__play--lamp{background:#f0a93b;border-color:transparent;color:#1a1206;font-weight:600}"
+    },
+    {
+      "name": "Add-songs sheet",
+      "kind": "custom",
+      "refersTo": "row-picker",
+      "description": "Signature: pickers are ruled lists, not card grids. The library as rows in a right-side sheet — tap to add; songs already in the order sit on a green tint with a check. Own search, scrim tap dismisses.",
+      "html": "<div class=\"ds-sheet\"><header class=\"ds-sheet__head\"><div><p class=\"ds-sheet__title\">Add songs</p><p class=\"ds-sheet__sub\">Tap a song to add it to the running order.</p></div><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\"><path d=\"M18 6 6 18\"/><path d=\"m6 6 12 12\"/></svg></header><div class=\"ds-sheet__search\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\"><circle cx=\"11\" cy=\"11\" r=\"8\"/><path d=\"m21 21-4.3-4.3\"/></svg><span class=\"ds-sheet__ph\">Search songs</span></div><ul class=\"ds-sheet__list\"><li class=\"ds-sheet__row ds-sheet__row--in\"><span class=\"ds-sheet__name\">Chikiri</span><span class=\"ds-sheet__check\"><svg width=\"15\" height=\"15\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M20 6 9 17l-5-5\"/></svg></span></li><li class=\"ds-sheet__row ds-sheet__row--add\"><span class=\"ds-sheet__name\">Nenu Nenuga</span><span class=\"ds-sheet__add\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\"><path d=\"M5 12h14\"/><path d=\"M12 5v14\"/></svg>Add</span></li><li class=\"ds-sheet__row ds-sheet__row--add\"><span class=\"ds-sheet__name\">Endhuko Emo</span><span class=\"ds-sheet__add\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\"><path d=\"M5 12h14\"/><path d=\"M12 5v14\"/></svg>Add</span></li></ul></div>",
+      "css": ".ds-sheet{width:100%;max-width:380px;margin-left:auto;border-left:1px solid rgba(255,255,255,.078);background:#121215;font-family:Sora,\"Noto Sans Telugu\",ui-sans-serif,system-ui,sans-serif}\n.ds-sheet__head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;padding:16px 20px;border-bottom:1px solid rgba(255,255,255,.078)}\n.ds-sheet__title{margin:0;font-size:17px;font-weight:600;letter-spacing:-.02em;color:#f4f4f5}\n.ds-sheet__sub{margin:2px 0 0;font-size:12px;color:#85858f}\n.ds-sheet__head svg{width:18px;height:18px;color:#85858f}\n.ds-sheet__search{display:flex;align-items:center;gap:8px;padding:12px 16px;border-bottom:1px solid rgba(255,255,255,.078);color:#85858f}\n.ds-sheet__search svg{width:16px;height:16px}\n.ds-sheet__ph{font-size:14px;color:#85858f}\n.ds-sheet__list{list-style:none;margin:0;padding:0}\n.ds-sheet__row{display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid rgba(255,255,255,.078)}\n.ds-sheet__row--in{background:rgba(116,177,131,.1)}\n.ds-sheet__name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:15px;font-weight:500;color:#f4f4f5}\n.ds-sheet__check{display:inline-flex;color:#74b183}\n.ds-sheet__check svg{width:15px;height:15px}\n.ds-sheet__add{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:500;color:#85858f}\n.ds-sheet__row--add:hover .ds-sheet__add{color:#f0a93b}"
+    },
+    {
+      "name": "Transport pill",
+      "kind": "custom",
+      "refersTo": "transport-pill",
+      "description": "The show's three moves in one thumb-sized cluster: previous, go-live/next, next.",
+      "html": "<div class=\"ds-transport\" role=\"group\" aria-label=\"Show transport\"><span class=\"ds-tbtn\">Prev</span><span class=\"ds-tbtn ds-tbtn--lamp\">Go live</span><span class=\"ds-tbtn\">Next</span></div>",
+      "css": ".ds-transport{display:inline-flex;align-items:center;gap:6px;border:1px solid rgba(255,255,255,.078);border-radius:9999px;background:#0b0b0c;padding:6px;font-family:Sora,\"Noto Sans Telugu\",ui-sans-serif,system-ui,sans-serif}\n.ds-tbtn{display:inline-flex;align-items:center;gap:6px;min-width:36px;height:32px;justify-content:center;border-radius:9999px;padding:0 12px;font-size:12px;font-weight:500;color:#f4f4f5}\n.ds-tbtn--lamp{background:#f0a93b;color:#1a1206;font-weight:600}"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Stage Manager's Desk",
+    "overview": "LOLOSYNC's admin is the desk of the person who calls the show and never appears on stage. It is a real admin panel — Dashboard, Events, Library, Live — with the calm of an Apple surface: rounded panels, generous spacing, one accent, nothing competing with the live state. It holds still while nothing changes, and when something is live it says so in light and words at once.\n\nDensity is deliberate but kind. Tables carry the working data with hairline rules and tabular mono counts; stat cards answer 'how big is tonight' at a glance; the Live page is the only expressive surface, painting the now-playing song's own gradient under a dark wash — the console and the projection are visibly the same picture, which is the product's whole promise made visible.\n\nConfirmed rejections: no second accent colour, no shadows on static surfaces, no decoration that competes with the live state, no card-grid dashboards of identical tiles — stat cards differ by content, tables differ by row.",
+    "keyCharacteristics": [
+      "Sidebar navigation with four sections — Dashboard, Events, Library, Live — and a sticky top bar carrying the Blackout lever alone.",
+      "Stat cards answer size; tables carry the work; filters sit in one calm bar above every table.",
+      "Cards on screens, ruled lists inside sheets — pickers and confirms are rows, never card grids.",
+      "One accent — Stage-Lamp Amber — reserved for live state, focus and the active view.",
+      "Every stage state shown as colour plus a word (LIVE, STAGED, PLAYED, CONNECTED, BLACKOUT).",
+      "Numbers set in tabular monospace: ordinals, counts, line counts.",
+      "The live song's gradient is the only large field of colour, and only in the Live now-playing card."
+    ],
+    "rules": [
+      {
+        "name": "The One Lamp Rule",
+        "section": "colors",
+        "body": "Amber appears only where something is live, focused, or the active view. If a screen has two amber things, one of them is wrong."
+      },
+      {
+        "name": "The Colour-Is-Never-Alone Rule",
+        "section": "colors",
+        "body": "No stage state is communicated by colour alone: every lamp carries a word (LIVE, STAGED, PLAYED, CONNECTED, BLACKOUT) in the same colour, so the console still reads in greyscale or for a colour-blind operator. Picker membership is the one exception: an in-order sheet row carries a green tint plus a check icon (with screen-reader text), no word — it is a selection state, not a stage state."
+      },
+      {
+        "name": "The Readout Rule",
+        "section": "typography",
+        "body": "Anything countable — song counts, lyric line counts, table ordinals, dates, stat values — is IBM Plex Mono with tabular figures so digits never shift the layout when they change."
+      },
+      {
+        "name": "The Flat Desk Rule",
+        "section": "elevation",
+        "body": "Nothing casts shadows, including overlays: dialogs and sheets use a scrim rather than elevation to separate themselves."
+      }
+    ],
+    "dos": [
+      "Reserve #f0a93b for live state, focus and the active view — one accent, used sparingly.",
+      "Pair every coloured stage state with its word, in the same colour.",
+      "Set counts, ordinals and line totals in IBM Plex Mono with tabular figures.",
+      "Separate regions with 1px hairlines (#ffffff14) on the surface ladder.",
+      "Confirm destructive actions with the exact question and honest buttons (Keep it / Delete song, Delete event).",
+      "Keep table actions reachable by keyboard everywhere, and tables horizontally scrollable below their minimum width.",
+      "Let sheets dismiss by scrim tap, Esc, or close — never strand the operator behind an overlay.",
+      "Honour prefers-reduced-motion: all durations collapse and pulses stop."
+    ],
+    "donts": [
+      "Don't introduce a second accent colour or a bright brand fill.",
+      "Don't state a stage status with colour alone — no bare coloured dots.",
+      "Don't put shadows anywhere in the admin; overlays use a scrim rather than elevation.",
+      "Don't use the song gradients as general decoration — only in the Live now-playing card (45% black wash) and on the audience screen (45% black wash).",
+      "Don't mix corner radii: panels and inputs are rounded-xl/2xl, action pills are full-round.",
+      "Don't put controls in the audience view — it has no chrome at all, and keeps @ SRKR LOLO verbatim."
+    ]
+  }
+}
