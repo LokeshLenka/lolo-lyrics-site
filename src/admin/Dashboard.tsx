@@ -54,7 +54,7 @@ export function Dashboard({
         <p className="text-[13px] text-ink-3">Loading…</p>
       ) : (
         <div className="flex flex-col gap-4 sm:gap-5">
-          <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
+          <div className="grid grid-cols-1 gap-3 min-[380px]:grid-cols-2 sm:gap-4 lg:grid-cols-4">
             <StatCard
               label="Songs"
               value={String(songs.length)}

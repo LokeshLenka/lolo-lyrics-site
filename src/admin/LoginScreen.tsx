@@ -24,7 +24,7 @@ export function LoginScreen({
   };
 
   return (
-    <div className="relative flex min-h-dvh items-center justify-center overflow-hidden bg-console px-4 py-10">
+    <div className="login-screen relative flex min-h-dvh items-center justify-center overflow-hidden bg-console px-4 py-10">
       <div className="login-glow pointer-events-none absolute inset-0" />
       <form
         onSubmit={(e) => void submit(e)}

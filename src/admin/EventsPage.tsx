@@ -20,9 +20,11 @@ import { CSS } from "@dnd-kit/utilities";
 import {
   CalendarDays,
   GripVertical,
+  Menu,
   Pencil,
   Plus,
   Search,
+  SlidersHorizontal,
   Trash2,
   X,
 } from "lucide-react";
@@ -30,15 +32,30 @@ import type { Event, Song } from "./types";
 import type { ScreenProps } from "./actions";
 import { AdminShell, Field, Panel, inputClass, selectClass } from "./layout";
 import { Button, Readout } from "./primitives";
+import { SwipeRow } from "./SwipeRow";
 import { useNotice } from "./notice";
 import { NoticeBar } from "./layout";
-import { AddSongsSheet, ConfirmDialog } from "./overlays";
+import {
+  AddSongsSheet,
+  ConfirmDialog,
+  MobileActionSheet,
+  MobileFilterSheet,
+} from "./overlays";
 import { cn } from "./cn";
 
-type SortKey = "newest" | "oldest" | "name-asc" | "name-desc" | "most" | "fewest";
+type SortKey =
+  | "newest"
+  | "oldest"
+  | "name-asc"
+  | "name-desc"
+  | "most"
+  | "fewest";
 type Presence = "all" | "with-songs" | "empty";
 
-const keepSetlistRowsAligned: Modifier = ({ transform }) => ({ ...transform, x: 0 });
+const keepSetlistRowsAligned: Modifier = ({ transform }) => ({
+  ...transform,
+  x: 0,
+});
 
 function SortableEventSong({
   song,
@@ -71,48 +88,108 @@ function SortableEventSong({
         transition,
       }}
       className={cn(
-        "relative grid grid-cols-[2.5rem_minmax(0,1fr)_auto] items-center gap-2 border-b border-hairline px-3 py-3 last:border-b-0 sm:grid-cols-[3rem_minmax(0,1fr)_auto] sm:px-5",
+        "relative border-b border-hairline last:border-b-0",
         isDragging && "z-10 bg-raised opacity-60 ring-1 ring-lamp/70",
         isOver && !isDragging && "bg-lamp/[0.06]",
       )}
     >
       {isOver && !isDragging && (
-        <span aria-hidden="true" className="pointer-events-none absolute inset-1 border-2 border-dashed border-lamp/80" />
+        <span
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-1 border-2 border-dashed border-lamp/80"
+        />
       )}
-      <Readout className={cn("text-[14px]", isLive && "text-lamp")}>
-        {String(index + 1).padStart(2, "0")}
-      </Readout>
-      <div className="min-w-0">
-        <p className="break-words text-[15px] leading-snug font-medium">{song.title}</p>
-        <p className="mt-1 flex flex-wrap items-center gap-2 text-[14px] text-ink-3">
-          <span>{song.lyrics.length} {song.lyrics.length === 1 ? "line" : "lines"}</span>
-          {isLive && (
-            <span className="border border-lamp/50 px-1.5 py-0.5 font-mono text-[10px] tracking-[0.12em] text-lamp uppercase">
-              Live now
-            </span>
-          )}
-        </p>
+      <div className="md:hidden">
+        <SwipeRow
+          label={song.title}
+          height={88}
+          fullSwipe={false}
+          actions={[
+            {
+              id: "remove",
+              label: "Remove",
+              icon: <X size={18} aria-hidden="true" />,
+              color: "#ff5964",
+              onSelect: onRemove,
+            },
+          ]}
+        >
+          <div className="flex h-full w-full min-w-0 items-center gap-3 px-3">
+            <Readout
+              className={cn("shrink-0 text-[14px]", isLive && "text-lamp")}
+            >
+              {String(index + 1).padStart(2, "0")}
+            </Readout>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-[15px] leading-snug font-medium">
+                {song.title}
+              </p>
+              <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[12px] text-ink-3">
+                <span>
+                  {song.lyrics.length}{" "}
+                  {song.lyrics.length === 1 ? "line" : "lines"}
+                </span>
+                {isLive && (
+                  <span className="border border-lamp/50 px-1.5 py-0.5 font-mono text-[10px] tracking-[0.12em] text-lamp uppercase">
+                    Live now
+                  </span>
+                )}
+              </p>
+            </div>
+            <button
+              type="button"
+              {...attributes}
+              {...listeners}
+              data-swipe-ignore
+              aria-label={`Drag to reorder ${song.title}`}
+              title="Drag to reorder"
+              className="grid size-11 shrink-0 cursor-grab touch-none place-items-center border border-hairline-strong bg-raised text-ink-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-lamp active:cursor-grabbing"
+            >
+              <GripVertical size={19} aria-hidden="true" />
+            </button>
+          </div>
+        </SwipeRow>
       </div>
-      <div className="relative z-10 flex items-center gap-1">
-        <button
-          type="button"
-          {...attributes}
-          {...listeners}
-          aria-label={`Drag to reorder ${song.title}`}
-          title="Drag to reorder"
-          className="grid size-11 cursor-grab touch-none place-items-center border border-hairline-strong bg-raised text-ink-2 transition-colors hover:border-lamp/70 hover:bg-lamp-soft hover:text-lamp focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-lamp active:cursor-grabbing"
-        >
-          <GripVertical size={19} aria-hidden="true" />
-        </button>
-        <button
-          type="button"
-          onClick={onRemove}
-          aria-label={`Remove ${song.title} from ${eventName}`}
-          title="Remove from event"
-          className="grid size-11 place-items-center text-ink-3 transition-colors hover:bg-signal-bad/10 hover:text-signal-bad focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-lamp"
-        >
-          <X size={17} aria-hidden="true" />
-        </button>
+      <div className="hidden grid-cols-[2.5rem_minmax(0,1fr)_auto] items-center gap-2 px-3 py-3 md:grid sm:grid-cols-[3rem_minmax(0,1fr)_auto] sm:px-5">
+        <Readout className={cn("text-[14px]", isLive && "text-lamp")}>
+          {String(index + 1).padStart(2, "0")}
+        </Readout>
+        <div className="min-w-0">
+          <p className="break-words text-[15px] leading-snug font-medium">
+            {song.title}
+          </p>
+          <p className="mt-1 flex flex-wrap items-center gap-2 text-[14px] text-ink-3">
+            <span>
+              {song.lyrics.length} {song.lyrics.length === 1 ? "line" : "lines"}
+            </span>
+            {isLive && (
+              <span className="border border-lamp/50 px-1.5 py-0.5 font-mono text-[10px] tracking-[0.12em] text-lamp uppercase">
+                Live now
+              </span>
+            )}
+          </p>
+        </div>
+        <div className="relative z-10 flex items-center gap-1">
+          <button
+            type="button"
+            {...attributes}
+            {...listeners}
+            aria-label={`Drag to reorder ${song.title}`}
+            title="Drag to reorder"
+            className="grid size-11 cursor-grab touch-none place-items-center border border-hairline-strong bg-raised text-ink-2 transition-colors hover:border-lamp/70 hover:bg-lamp-soft hover:text-lamp focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-lamp active:cursor-grabbing"
+          >
+            <GripVertical size={19} aria-hidden="true" />
+          </button>
+          <button
+            type="button"
+            onClick={onRemove}
+            aria-label={`Remove ${song.title} from ${eventName}`}
+            title="Remove from event"
+            className="grid size-11 place-items-center text-ink-3 transition-colors hover:bg-signal-bad/10 hover:text-signal-bad focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-lamp"
+          >
+            <X size={17} aria-hidden="true" />
+          </button>
+        </div>
       </div>
     </li>
   );
@@ -142,6 +219,8 @@ export function EventsPage({
   const [maxSongs, setMaxSongs] = useState("");
   const [presence, setPresence] = useState<Presence>("all");
   const [sort, setSort] = useState<SortKey>("newest");
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [eventActionsOpen, setEventActionsOpen] = useState(false);
 
   const [editing, setEditing] = useState<null | "new" | Event>(null);
   const [nameValue, setNameValue] = useState("");
@@ -154,7 +233,9 @@ export function EventsPage({
   const [adding, setAdding] = useState(false);
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    }),
   );
 
   const filtered = useMemo(() => {
@@ -188,7 +269,17 @@ export function EventsPage({
       default:
         return [...list].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
     }
-  }, [events, eventSongCounts, query, dateFrom, dateTo, minSongs, maxSongs, presence, sort]);
+  }, [
+    events,
+    eventSongCounts,
+    query,
+    dateFrom,
+    dateTo,
+    minSongs,
+    maxSongs,
+    presence,
+    sort,
+  ]);
 
   const filtersActive =
     query !== "" ||
@@ -206,6 +297,120 @@ export function EventsPage({
     setMaxSongs("");
     setPresence("all");
   };
+
+  const eventFilterFields = (
+    <>
+      <div className="grid grid-cols-1 gap-3 lg:grid-cols-[minmax(0,1fr)_12rem_12rem]">
+        <Field label="Search events" className="hidden md:block">
+          <div className="relative">
+            <Search
+              size={16}
+              aria-hidden="true"
+              className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-ink-3"
+            />
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search by event name"
+              aria-label="Search events by name"
+              className={cn(inputClass, "pr-10 pl-10")}
+            />
+            {query && (
+              <button
+                type="button"
+                onClick={() => setQuery("")}
+                aria-label="Clear event search"
+                className="absolute top-1/2 right-1 grid size-9 -translate-y-1/2 place-items-center text-ink-3 transition-colors hover:text-ink"
+              >
+                <X size={15} aria-hidden="true" />
+              </button>
+            )}
+          </div>
+        </Field>
+        <Field label="Event status">
+          <select
+            value={presence}
+            onChange={(e) => setPresence(e.target.value as Presence)}
+            aria-label="Filter by song presence"
+            className={selectClass}
+          >
+            <option value="all">All events</option>
+            <option value="with-songs">With songs</option>
+            <option value="empty">No songs yet</option>
+          </select>
+        </Field>
+        <Field label="Sort events">
+          <select
+            value={sort}
+            onChange={(e) => setSort(e.target.value as SortKey)}
+            aria-label="Sort events"
+            className={selectClass}
+          >
+            <option value="newest">Newest first</option>
+            <option value="oldest">Oldest first</option>
+            <option value="name-asc">Name A–Z</option>
+            <option value="name-desc">Name Z–A</option>
+            <option value="most">Most songs</option>
+            <option value="fewest">Fewest songs</option>
+          </select>
+        </Field>
+      </div>
+      <details
+        open={Boolean(dateFrom || dateTo || minSongs || maxSongs)}
+        className="mt-3 border-t border-hairline pt-1"
+      >
+        <summary className="flex min-h-11 cursor-pointer flex-wrap items-center gap-2 text-[14px] font-medium text-ink-2 marker:text-ink-3 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-lamp">
+          <span>Date &amp; song count</span>
+          {(dateFrom || dateTo || minSongs || maxSongs) && (
+            <Readout>ACTIVE</Readout>
+          )}
+          <span className="ml-auto text-[12px] font-normal text-ink-3">Click to open panel</span>
+        </summary>
+        <div className="grid grid-cols-2 gap-3 pb-2 lg:grid-cols-4">
+          <Field label="Created from">
+            <input
+              type="date"
+              value={dateFrom}
+              onChange={(e) => setDateFrom(e.target.value)}
+              aria-label="Created from date"
+              className={cn(inputClass, "[color-scheme:dark]")}
+            />
+          </Field>
+          <Field label="Created to">
+            <input
+              type="date"
+              value={dateTo}
+              onChange={(e) => setDateTo(e.target.value)}
+              aria-label="Created to date"
+              className={cn(inputClass, "[color-scheme:dark]")}
+            />
+          </Field>
+          <Field label="Minimum songs">
+            <input
+              type="number"
+              min={0}
+              value={minSongs}
+              onChange={(e) => setMinSongs(e.target.value)}
+              placeholder="Any"
+              aria-label="Minimum songs"
+              className={inputClass}
+            />
+          </Field>
+          <Field label="Maximum songs">
+            <input
+              type="number"
+              min={0}
+              value={maxSongs}
+              onChange={(e) => setMaxSongs(e.target.value)}
+              placeholder="Any"
+              aria-label="Maximum songs"
+              className={inputClass}
+            />
+          </Field>
+        </div>
+      </details>
+    </>
+  );
 
   const reloadManaged = async (eventId: string) => {
     setManageLoading(true);
@@ -275,7 +480,12 @@ export function EventsPage({
     }
   };
 
-  const inManageIds = useMemo(() => new Set(manageSongs.map((s) => s.id)), [manageSongs]);
+  const inManageIds = useMemo(
+    () => new Set(manageSongs.map((s) => s.id)),
+    [manageSongs],
+  );
+  const selectedEvent =
+    filtered.find((event) => event.id === managingId) ?? null;
 
   const addManaged = async (song: Song) => {
     if (!managingId || inManageIds.has(song.id)) return;
@@ -291,7 +501,10 @@ export function EventsPage({
   const removeManaged = async (song: Song) => {
     if (!managingId) return;
     if (song.id === activeSongId) {
-      setNotice({ tone: "bad", text: "That song is on stage. Blackout first, then remove it." });
+      setNotice({
+        tone: "bad",
+        text: "That song is on stage. Blackout first, then remove it.",
+      });
       return;
     }
     try {
@@ -304,8 +517,12 @@ export function EventsPage({
 
   const reorderManaged = async ({ active, over }: DragEndEvent) => {
     if (!managingId || !over || active.id === over.id) return;
-    const sourceIndex = manageSongs.findIndex((song) => song.id === String(active.id));
-    const targetIndex = manageSongs.findIndex((song) => song.id === String(over.id));
+    const sourceIndex = manageSongs.findIndex(
+      (song) => song.id === String(active.id),
+    );
+    const targetIndex = manageSongs.findIndex(
+      (song) => song.id === String(over.id),
+    );
     if (sourceIndex < 0 || targetIndex < 0) return;
     const previous = manageSongs;
     const next = arrayMove(manageSongs, sourceIndex, targetIndex);
@@ -335,121 +552,189 @@ export function EventsPage({
       onSignOut={actions.signOut}
       navigate={navigate}
       headerActions={
-        <Button size="sm" tone="lamp" onClick={openCreate} className="rounded-none">
+        <Button
+          size="sm"
+          tone="lamp"
+          onClick={openCreate}
+          aria-label="New event"
+          className="hidden shrink-0 rounded-none px-3 md:inline-flex md:h-8"
+        >
           <Plus size={15} aria-hidden="true" />
-          <span className="hidden sm:inline">New event</span>
+          New event
         </Button>
       }
     >
       <NoticeBar notice={notice} onDismiss={clearNotice} />
-      <div className="flex flex-col gap-4 sm:gap-5">
-        <Panel title="Find an event" action={filtersActive ? <Readout>FILTERS ON</Readout> : undefined} className="rounded-none">
-          <div className="grid grid-cols-1 gap-3 px-4 py-4 sm:grid-cols-[minmax(0,1fr)_12rem_12rem] sm:px-5">
-            <Field label="Search events">
-              <div className="relative">
-                <Search size={16} aria-hidden="true" className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-ink-3" />
-                <input
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Search by event name"
-                  aria-label="Search events by name"
-                  className={cn(inputClass, "pr-10 pl-10")}
-                />
-                {query && (
-                  <button type="button" onClick={() => setQuery("")} aria-label="Clear event search" className="absolute top-1/2 right-1 grid size-9 -translate-y-1/2 place-items-center text-ink-3 transition-colors hover:text-ink">
-                    <X size={15} aria-hidden="true" />
-                  </button>
-                )}
-              </div>
-            </Field>
-            <Field label="Event status">
-              <select value={presence} onChange={(e) => setPresence(e.target.value as Presence)} aria-label="Filter by song presence" className={selectClass}>
-                <option value="all">All events</option>
-                <option value="with-songs">With songs</option>
-                <option value="empty">No songs yet</option>
-              </select>
-            </Field>
-            <Field label="Sort events">
-              <select value={sort} onChange={(e) => setSort(e.target.value as SortKey)} aria-label="Sort events" className={selectClass}>
-                <option value="newest">Newest first</option>
-                <option value="oldest">Oldest first</option>
-                <option value="name-asc">Name A–Z</option>
-                <option value="name-desc">Name Z–A</option>
-                <option value="most">Most songs</option>
-                <option value="fewest">Fewest songs</option>
-              </select>
-            </Field>
-          </div>
-          <details open={Boolean(dateFrom || dateTo || minSongs || maxSongs)} className="border-t border-hairline px-4 sm:px-5">
-            <summary className="flex min-h-11 cursor-pointer items-center gap-2 text-[14px] font-medium text-ink-2 marker:text-ink-3 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-lamp">
-              Date and setlist size
-              {(dateFrom || dateTo || minSongs || maxSongs) && <Readout>ACTIVE</Readout>}
-            </summary>
-            <div className="grid grid-cols-2 gap-3 pb-4 sm:grid-cols-4">
-              <Field label="Created from">
-                <input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} aria-label="Created from date" className={cn(inputClass, "[color-scheme:dark]")} />
-              </Field>
-              <Field label="Created to">
-                <input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} aria-label="Created to date" className={cn(inputClass, "[color-scheme:dark]")} />
-              </Field>
-              <Field label="Minimum songs">
-                <input type="number" min={0} value={minSongs} onChange={(e) => setMinSongs(e.target.value)} placeholder="Any" aria-label="Minimum songs" className={inputClass} />
-              </Field>
-              <Field label="Maximum songs">
-                <input type="number" min={0} value={maxSongs} onChange={(e) => setMaxSongs(e.target.value)} placeholder="Any" aria-label="Maximum songs" className={inputClass} />
-              </Field>
-            </div>
-          </details>
+      <div className="mb-4 flex items-center gap-2 md:hidden">
+        <div className="relative min-w-0 flex-1">
+          <Search size={16} aria-hidden="true" className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-ink-3" />
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search events"
+            aria-label="Search events by name"
+            className={cn(inputClass, "h-11 pl-10 pr-10")}
+          />
+          {query && (
+            <button type="button" onClick={() => setQuery("")} aria-label="Clear event search" className="absolute top-1/2 right-1 grid size-9 -translate-y-1/2 place-items-center text-ink-3 transition-colors hover:text-ink">
+              <X size={15} aria-hidden="true" />
+            </button>
+          )}
+        </div>
+        <Button
+          size="md"
+          tone="quiet"
+          onClick={() => setFiltersOpen(true)}
+          aria-label={filtersActive ? "Filters, active" : "Filters"}
+          aria-haspopup="dialog"
+          aria-expanded={filtersOpen}
+          className="h-11"
+        >
+          <SlidersHorizontal size={16} aria-hidden="true" />
+          Filters
+          {filtersActive && (
+            <span className="font-mono text-[11px] text-lamp">ON</span>
+          )}
+        </Button>
+      </div>
+      <div className="flex flex-col gap-4 pb-16 sm:gap-5 md:pb-0">
+        <Panel
+          title="Find an event"
+          action={filtersActive ? <Readout>FILTERS ON</Readout> : undefined}
+          className="hidden rounded-none md:block"
+        >
+          <div className="px-4 py-4 sm:px-5">{eventFilterFields}</div>
           {filtersActive && (
             <div className="flex justify-end border-t border-hairline px-4 py-2 sm:px-5">
-              <Button size="sm" tone="ghost" onClick={clearFilters} className="rounded-none">Clear filters</Button>
+              <Button
+                size="sm"
+                tone="ghost"
+                onClick={clearFilters}
+                className="rounded-none"
+              >
+                Clear filters
+              </Button>
             </div>
           )}
         </Panel>
 
         {!initialized ? (
           <Panel title="Events" className="rounded-none">
-            <p className="px-4 py-6 text-[14px] text-ink-3 sm:px-5">Loading events…</p>
+            <p className="px-4 py-6 text-[14px] text-ink-3 sm:px-5">
+              Loading events…
+            </p>
           </Panel>
         ) : filtered.length === 0 ? (
           <Panel title="Events" className="rounded-none">
             <div className="flex flex-col items-center px-4 py-12 text-center sm:px-5">
-              <CalendarDays size={24} aria-hidden="true" className="text-ink-3" />
-              <p className="mt-3 text-[16px] font-medium">{events.length === 0 ? "No events yet" : "No events match these filters"}</p>
+              <CalendarDays
+                size={24}
+                aria-hidden="true"
+                className="text-ink-3"
+              />
+              <p className="mt-3 text-[16px] font-medium">
+                {events.length === 0
+                  ? "No events yet"
+                  : "No events match these filters"}
+              </p>
               <p className="mt-1 max-w-[46ch] text-[14px] text-ink-3">
-                {events.length === 0 ? "Create an event, then build its running order from the song library." : "Try another search or clear your filters."}
+                {events.length === 0
+                  ? "Create an event, then build its running order from the song library."
+                  : "Try another search or clear your filters."}
               </p>
               <div className="mt-4 flex gap-2">
-                {filtersActive && <Button onClick={clearFilters} className="rounded-none">Clear filters</Button>}
-                {events.length === 0 && <Button tone="lamp" onClick={openCreate} className="rounded-none"><Plus size={15} aria-hidden="true" />New event</Button>}
+                {filtersActive && (
+                  <Button onClick={clearFilters} className="rounded-none">
+                    Clear filters
+                  </Button>
+                )}
+                {events.length === 0 && (
+                  <Button
+                    tone="lamp"
+                    onClick={openCreate}
+                    className="hidden rounded-none md:inline-flex"
+                  >
+                    <Plus size={15} aria-hidden="true" />
+                    New event
+                  </Button>
+                )}
               </div>
             </div>
           </Panel>
         ) : (
           <>
-            <Field label="Selected event" className="lg:hidden">
-              <select value={managingId ?? ""} onChange={(e) => setManagingId(e.target.value)} aria-label="Choose event to manage" className={selectClass}>
-                {filtered.map((event) => <option key={event.id} value={event.id}>{event.name} · {eventSongCounts[event.id] ?? 0} songs</option>)}
+            <div className="lg:hidden">
+              <div className="mb-1.5 flex items-center justify-between gap-3">
+                <span className="font-mono text-[10px] tracking-[0.14em] text-ink-3 uppercase">Selected event</span>
+                <Readout className="shrink-0 whitespace-nowrap">{filtered.length} EVENTS</Readout>
+              </div>
+              <select
+                value={managingId ?? ""}
+                onChange={(e) => setManagingId(e.target.value)}
+                aria-label="Choose event to manage"
+                className={selectClass}
+              >
+                {filtered.map((event) => (
+                  <option key={event.id} value={event.id}>
+                    {event.name} · {eventSongCounts[event.id] ?? 0} songs
+                  </option>
+                ))}
               </select>
-            </Field>
+            </div>
             <div className="grid gap-4 lg:grid-cols-[minmax(16rem,0.36fr)_minmax(0,0.64fr)] xl:gap-5">
-              <Panel title="Event index" action={<Readout>{filtered.length} EVENTS</Readout>} className="hidden rounded-none lg:block">
+              <Panel
+                title="Event index"
+                action={<Readout>{filtered.length} EVENTS</Readout>}
+                className="hidden rounded-none lg:block"
+              >
                 <div className="max-h-[68vh] overflow-y-auto">
                   {filtered.map((event) => {
                     const selected = managingId === event.id;
                     const count = eventSongCounts[event.id] ?? 0;
                     return (
-                      <button key={event.id} type="button" onClick={() => setManagingId(event.id)} aria-pressed={selected} className={cn("flex w-full items-start gap-3 border-b border-hairline px-4 py-4 text-left transition-colors last:border-b-0 hover:bg-white/[0.03] focus-visible:z-10 focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-lamp", selected && "bg-lamp/[0.08]")}>
-                        <span className={cn("mt-1.5 size-2 shrink-0 border", selected ? "border-lamp bg-lamp" : "border-hairline-strong")} aria-hidden="true" />
+                      <button
+                        key={event.id}
+                        type="button"
+                        onClick={() => setManagingId(event.id)}
+                        aria-pressed={selected}
+                        className={cn(
+                          "flex w-full items-start gap-3 border-b border-hairline px-4 py-4 text-left transition-colors last:border-b-0 hover:bg-white/[0.03] focus-visible:z-10 focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-lamp",
+                          selected && "bg-lamp/[0.08]",
+                        )}
+                      >
+                        <span
+                          className={cn(
+                            "mt-1.5 size-2 shrink-0 border",
+                            selected
+                              ? "border-lamp bg-lamp"
+                              : "border-hairline-strong",
+                          )}
+                          aria-hidden="true"
+                        />
                         <span className="min-w-0 flex-1">
-                          <span className="block break-words text-[15px] leading-snug font-medium">{event.name}</span>
+                          <span className="block break-words text-[15px] leading-snug font-medium">
+                            {event.name}
+                          </span>
                           <span className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[14px] text-ink-3">
-                            <span>{new Date(event.createdAt).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" })}</span>
+                            <span>
+                              {new Date(event.createdAt).toLocaleDateString(
+                                undefined,
+                                {
+                                  day: "numeric",
+                                  month: "short",
+                                  year: "numeric",
+                                },
+                              )}
+                            </span>
                             <span aria-hidden="true">·</span>
-                            <span>{count} {count === 1 ? "song" : "songs"}</span>
+                            <span>
+                              {count} {count === 1 ? "song" : "songs"}
+                            </span>
                           </span>
                         </span>
-                        {selected && <Readout className="pt-0.5 text-lamp">OPEN</Readout>}
+                        {selected && (
+                          <Readout className="pt-0.5 text-lamp">OPEN</Readout>
+                        )}
                       </button>
                     );
                   })}
@@ -457,50 +742,118 @@ export function EventsPage({
               </Panel>
 
               {(() => {
-                const event = filtered.find((item) => item.id === managingId) ?? filtered[0];
+                const event =
+                  filtered.find((item) => item.id === managingId) ??
+                  filtered[0];
                 const count = eventSongCounts[event.id] ?? 0;
                 return (
-                  <Panel title={event.name} action={<Readout>{count} {count === 1 ? "SONG" : "SONGS"}</Readout>} className="rounded-none">
+                  <Panel
+                    title={event.name}
+                    action={
+                      <Readout>
+                        {count} {count === 1 ? "SONG" : "SONGS"}
+                      </Readout>
+                    }
+                    className="rounded-none"
+                  >
                     <div className="flex flex-wrap items-center justify-between gap-3 border-b border-hairline px-4 py-3 sm:px-5">
                       <div className="flex min-w-0 items-center gap-2 text-[14px] text-ink-3">
                         <CalendarDays size={15} aria-hidden="true" />
-                        <span>Created {new Date(event.createdAt).toLocaleDateString(undefined, { day: "numeric", month: "long", year: "numeric" })}</span>
+                        <span>
+                          Created{" "}
+                          {new Date(event.createdAt).toLocaleDateString(
+                            undefined,
+                            { day: "numeric", month: "long", year: "numeric" },
+                          )}
+                        </span>
                       </div>
                       <div className="flex items-center gap-1">
-                        <button type="button" onClick={() => openRename(event)} aria-label={`Rename ${event.name}`} title="Rename event" className="grid size-10 place-items-center text-ink-3 transition-colors hover:bg-white/[0.05] hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-lamp">
-                          <Pencil size={17} aria-hidden="true" />
-                        </button>
-                        <button type="button" onClick={() => setDeleting(event)} aria-label={`Delete ${event.name}`} title="Delete event" className="grid size-10 place-items-center text-ink-3 transition-colors hover:bg-signal-bad/10 hover:text-signal-bad focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-lamp">
-                          <Trash2 size={17} aria-hidden="true" />
+                        <div className="hidden items-center gap-1 md:flex">
+                          <button
+                            type="button"
+                            onClick={() => openRename(event)}
+                            aria-label={`Rename ${event.name}`}
+                            title="Rename event"
+                            className="grid size-10 place-items-center text-ink-3 transition-colors hover:bg-white/[0.05] hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-lamp"
+                          >
+                            <Pencil size={17} aria-hidden="true" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setDeleting(event)}
+                            aria-label={`Delete ${event.name}`}
+                            title="Delete event"
+                            className="grid size-10 place-items-center text-ink-3 transition-colors hover:bg-signal-bad/10 hover:text-signal-bad focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-lamp"
+                          >
+                            <Trash2 size={17} aria-hidden="true" />
+                          </button>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setEventActionsOpen(true)}
+                          aria-label={`Event actions for ${event.name}`}
+                          aria-haspopup="dialog"
+                          aria-expanded={eventActionsOpen}
+                          title="Event actions"
+                            className="grid size-11 place-items-center text-ink-3 transition-colors hover:bg-white/[0.05] hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-lamp md:hidden"
+                        >
+                          <Menu size={22} aria-hidden="true" />
                         </button>
                       </div>
                     </div>
 
                     <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-4 sm:px-5">
                       <div>
-                        <h2 className="text-[17px] font-semibold">Running order</h2>
-                        <p className="mt-1 text-[14px] text-ink-3">Reorder songs for this event’s setlist.</p>
+                        <h2 className="text-[17px] font-semibold">
+                          Running order
+                        </h2>
+                        <p className="mt-1 text-[14px] text-ink-3">
+                          Reorder songs for this event’s setlist.
+                        </p>
                       </div>
-                      <Button size="md" tone="quiet" onClick={() => setAdding(true)} className="rounded-none">
-                        <Plus size={16} aria-hidden="true" />Add songs
+                      <Button
+                        size="md"
+                        tone="quiet"
+                        onClick={() => setAdding(true)}
+                        className="hidden rounded-none md:inline-flex"
+                      >
+                        <Plus size={16} aria-hidden="true" />
+                        Add songs
                       </Button>
                     </div>
 
-                    <div className="h-[min(58vh,38rem)] min-h-64 overflow-x-hidden overflow-y-auto overscroll-contain border-t border-hairline">
+                    <div className="overflow-x-hidden overflow-y-visible border-t border-hairline lg:h-[min(58vh,38rem)] lg:min-h-64 lg:overflow-y-auto lg:overscroll-contain">
                       {manageLoading ? (
-                        <div className="grid h-full place-items-center px-4 py-5 text-[14px] text-ink-3 sm:px-5">Loading this setlist…</div>
+                        <div className="grid h-full place-items-center px-4 py-5 text-[14px] text-ink-3 sm:px-5">
+                          Loading this setlist…
+                        </div>
                       ) : manageSongs.length === 0 ? (
                         <div className="flex h-full flex-col items-center justify-center px-4 py-8 text-center sm:px-5">
-                          <p className="text-[15px] font-medium">This setlist is empty</p>
-                          <p className="mt-1 text-[14px] text-ink-3">Add songs from your library to set the running order.</p>
-                          <Button size="md" tone="lamp" onClick={() => setAdding(true)} className="mt-4 rounded-none"><Plus size={16} aria-hidden="true" />Add songs</Button>
+                          <p className="text-[15px] font-medium">
+                            This setlist is empty
+                          </p>
+                          <p className="mt-1 text-[14px] text-ink-3">
+                            Add songs from your library to set the running
+                            order.
+                          </p>
+                          <Button
+                            size="md"
+                            tone="lamp"
+                            onClick={() => setAdding(true)}
+                            className="mt-4 hidden rounded-none md:inline-flex"
+                          >
+                            <Plus size={16} aria-hidden="true" />
+                            Add songs
+                          </Button>
                         </div>
                       ) : (
                         <DndContext
                           sensors={sensors}
                           collisionDetection={closestCenter}
                           modifiers={[keepSetlistRowsAligned]}
-                          onDragEnd={(dragEvent) => void reorderManaged(dragEvent)}
+                          onDragEnd={(dragEvent) =>
+                            void reorderManaged(dragEvent)
+                          }
                         >
                           <SortableContext
                             items={manageSongs.map((song) => song.id)}
@@ -529,6 +882,69 @@ export function EventsPage({
           </>
         )}
       </div>
+
+      <Button
+        tone="lamp"
+        onClick={openCreate}
+        aria-label="Add an event"
+        className="fixed right-4 bottom-[calc(4.75rem+env(safe-area-inset-bottom))] z-40 h-12 rounded-none px-4 shadow-lg md:hidden"
+      >
+        <Plus size={18} aria-hidden="true" />
+        New event
+      </Button>
+
+      {filtersOpen && (
+        <MobileFilterSheet
+          title="Event filters"
+          onClose={() => setFiltersOpen(false)}
+          onReset={clearFilters}
+          resetDisabled={!filtersActive}
+        >
+          {eventFilterFields}
+        </MobileFilterSheet>
+      )}
+
+      {eventActionsOpen && selectedEvent && (
+        <MobileActionSheet
+          title="Event actions"
+          description={selectedEvent.name}
+          onClose={() => setEventActionsOpen(false)}
+        >
+          <button
+            type="button"
+            onClick={() => {
+              setEventActionsOpen(false);
+              openRename(selectedEvent);
+            }}
+            className="flex min-h-14 w-full items-center gap-3 border border-hairline px-4 text-left transition-colors hover:bg-white/[0.05] focus-visible:outline-2 focus-visible:outline-lamp"
+          >
+            <Pencil size={18} aria-hidden="true" className="text-ink-2" />
+            <span className="text-[15px] font-medium">Rename event</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setEventActionsOpen(false);
+              setAdding(true);
+            }}
+            className="flex min-h-14 w-full items-center gap-3 border border-hairline px-4 text-left transition-colors hover:bg-white/[0.05] focus-visible:outline-2 focus-visible:outline-lamp"
+          >
+            <Plus size={19} aria-hidden="true" className="text-ink-2" />
+            <span className="text-[15px] font-medium">Add songs</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setEventActionsOpen(false);
+              setDeleting(selectedEvent);
+            }}
+            className="flex min-h-14 w-full items-center gap-3 border border-signal-bad/30 px-4 text-left text-signal-bad transition-colors hover:bg-signal-bad/10 focus-visible:outline-2 focus-visible:outline-lamp"
+          >
+            <Trash2 size={18} aria-hidden="true" />
+            <span className="text-[15px] font-medium">Delete event</span>
+          </button>
+        </MobileActionSheet>
+      )}
 
       {/* Create / rename dialog */}
       {editing && (
@@ -566,7 +982,11 @@ export function EventsPage({
               />
             </label>
             <div className="mt-5 flex justify-end gap-2">
-              <Button size="lg" onClick={() => setEditing(null)} className="rounded-none">
+              <Button
+                size="lg"
+                onClick={() => setEditing(null)}
+                className="rounded-none"
+              >
                 Cancel
               </Button>
               <Button

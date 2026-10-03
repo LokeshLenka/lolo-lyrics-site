@@ -14,7 +14,7 @@
   width: 1px;
   background: linear-gradient(to bottom, transparent 4%, var(--color-lamp) 34%, var(--color-brand-cyan) 62%, var(--color-lamp) 84%, transparent);
 }
-.admin-topbar { background: rgb(8 7 11 / 94%); border-color: var(--color-hairline); }
+.admin-topbar { background: rgb(8 7 11 / 78%); border-color: var(--color-hairline); -webkit-backdrop-filter: blur(18px); backdrop-filter: blur(18px); }
 .admin-content { max-width: 1360px; }
 .brand-mark { letter-spacing: -.055em; }
 .brand-mark em { color: var(--color-lamp); font-style: normal; }
@@ -36,6 +36,11 @@
 .audience-live::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(90deg, rgba(0,0,0,.58), rgba(0,0,0,.15) 55%, rgba(0,0,0,.52)); }
 .audience-content { position: relative; z-index: 1; }
 
-@media (max-width: 639px) {
-  .admin-content { padding-top: 1.25rem; }
+@media (max-width: 767px), (pointer: coarse) {
+  .admin-shell button,
+  .login-screen button,
+  .login-screen input { min-width: 44px; min-height: 44px; }
+  .admin-shell input,
+  .admin-shell select,
+  .admin-shell textarea { min-height: 44px; }
 }

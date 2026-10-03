@@ -47,6 +47,110 @@ function Scrim({
   );
 }
 
+export function MobileFilterSheet({
+  title,
+  onClose,
+  onReset,
+  resetDisabled,
+  children,
+}: {
+  title: string;
+  onClose: () => void;
+  onReset: () => void;
+  resetDisabled: boolean;
+  children: ReactNode;
+}) {
+  useDismiss(true, onClose);
+
+  return (
+    <Scrim onBackdropClick={onClose}>
+      <motion.section
+        role="dialog"
+        aria-modal="true"
+        aria-label={title}
+        initial={{ opacity: 0, y: 32 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: 32 }}
+        transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+        className="mt-auto flex max-h-[85dvh] w-full flex-col border-t border-hairline bg-panel pb-[env(safe-area-inset-bottom)] md:hidden"
+      >
+        <header className="flex shrink-0 items-center justify-between gap-4 border-b border-hairline px-4 py-3">
+          <div>
+            <h2 className="text-[17px] font-semibold">{title}</h2>
+            <p className="mt-0.5 text-[13px] text-ink-3">Changes update results as you make them.</p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close filters"
+            className="grid size-11 shrink-0 place-items-center border border-hairline text-ink-2 transition-colors hover:bg-white/[0.05] hover:text-ink"
+          >
+            <X size={18} aria-hidden="true" />
+          </button>
+        </header>
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-4">
+          {children}
+        </div>
+        <footer className="flex shrink-0 items-center justify-between gap-3 border-t border-hairline px-4 py-3">
+          <Button size="md" tone="ghost" onClick={onReset} disabled={resetDisabled}>
+            Reset filters
+          </Button>
+          <Button size="md" tone="lamp" onClick={onClose}>
+            Show results
+          </Button>
+        </footer>
+      </motion.section>
+    </Scrim>
+  );
+}
+
+export function MobileActionSheet({
+  title,
+  description,
+  onClose,
+  children,
+}: {
+  title: string;
+  description: string;
+  onClose: () => void;
+  children: ReactNode;
+}) {
+  useDismiss(true, onClose);
+
+  return (
+    <Scrim onBackdropClick={onClose}>
+      <motion.section
+        role="dialog"
+        aria-modal="true"
+        aria-label={title}
+        initial={{ opacity: 0, y: 32 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: 32 }}
+        transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+        className="mt-auto flex max-h-[85dvh] w-full flex-col border-t border-hairline bg-panel pb-[env(safe-area-inset-bottom)] md:hidden"
+      >
+        <header className="flex shrink-0 items-center justify-between gap-4 border-b border-hairline px-4 py-3">
+          <div className="min-w-0">
+            <h2 className="text-[17px] font-semibold">{title}</h2>
+            <p className="mt-0.5 truncate text-[13px] text-ink-3">{description}</p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close event actions"
+            className="grid size-11 shrink-0 place-items-center border border-hairline text-ink-2 transition-colors hover:bg-white/[0.05] hover:text-ink"
+          >
+            <X size={18} aria-hidden="true" />
+          </button>
+        </header>
+        <div className="min-h-0 flex-1 space-y-2 overflow-y-auto overscroll-contain px-4 py-4">
+          {children}
+        </div>
+      </motion.section>
+    </Scrim>
+  );
+}
+
 /* --- Song editor: protected focus earns the modal (a long lyrics field) --- */
 
 export function SongEditor({
