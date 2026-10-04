@@ -1,75 +1,80 @@
-# React + TypeScript + Vite
+# LOLOSYNC — Live Lyrics Projection for SRKR LOLO
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+**LOLOSYNC** projects song lyrics for a live Telugu worship service. One operator runs the show from an admin console (`/admin`); every audience screen (any non-`/admin` path) follows the same live state in ~1 second over Supabase Realtime.
 
-Currently, two official plugins are available:
+Live site: **https://lyrics.srkrlolo.in** · Audience signature: `@ SRKR LOLO`
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## How it works
 
-## React Compiler
+- **Audience view** (`/`, or any non-admin path): full-screen per-song gradient, song title, lyrics one line per row. Idle state shows "Awaiting Signal". No controls, no chrome.
+- **Admin console** (`/admin`): email + password login, gated on `profiles.role = 'admin'`. Four sections — **Dashboard, Events, Library, Live**.
+- **Live control flow:** stage a song → push staged song live → blackout the stage. Single-row `live_state.active_song_id` is the shared truth; `set_live_song` RPC writes it, Realtime broadcasts it.
+- **Events** hold ordered setlists (drag to reorder, persists to `event_songs.sort_order`). Switching events clears the staged song.
+- **Song library:** title + lyrics (one line per row) + one of 14 fixed background gradients. Drag to set library order (`songs.sort_order`).
+- **Safety:** deletes / removes need confirmation; the live song can't be deleted or removed while live — blackout first. "Played this session" is `sessionStorage`-only.
 
-The React Compiler is enabled on this template. See [this documentation](https://react.dev/learn/react-compiler) for more information.
+## Tech stack
 
-Note: This will impact Vite dev & build performances.
+- React 19 + TypeScript + Vite 7, Tailwind CSS v4, Framer Motion, dnd-kit, lucide-react
+- Supabase (Postgres + Auth + Realtime) via `@supabase/supabase-js`
+- Static SPA deployed on **Vercel** (`vercel.json` rewrites everything to `/index.html`); Vercel Analytics + Speed Insights enabled
+- Fonts: Sora + Noto Sans Telugu ( UI / lyrics ), IBM Plex Mono ( counts, statuses, readouts )
 
-## Expanding the ESLint configuration
+## Supabase schema (existing tables, not in repo)
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+| Table | Purpose |
+|---|---|
+| `songs` | `title`, `lyrics` (lines), `background` (gradient id), `sort_order` |
+| `events` | event name |
+| `event_songs` | join with `sort_order` — the setlist running order |
+| `live_state` | single row, `active_song_id` — what the room sees |
+| `profiles` | auth users, `role = 'admin'` gate |
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+Song data lives in Supabase, not in this repo.
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+## Local development
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+Requires Node 18+.
+
+```bash
+npm install
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+Create `.env` (Vite `VITE_` prefix required — the app throws at import without these):
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```env
+VITE_SUPABASE_URL=https://<project>.supabase.co
+VITE_SUPABASE_PUBLISHABLE_KEY=<publishable-key>
 ```
+
+```bash
+npm run dev      # start dev server
+npm run build    # tsc + vite build → dist/
+npm run preview  # preview production build
+npm run lint     # eslint
+```
+
+Admin login locally uses the same Supabase Auth users as production — sign in at `http://localhost:5173/admin`.
+
+## Project layout
+
+```
+src/
+  App.tsx            # route switch: /admin/* → console, else audience view
+  admin/             # Dashboard, EventsPage, SongsPage, LivePage, LoginScreen,
+                     # useAdminData, actions, route, types (gradients)
+  lib/               # supabase client
+  assets/
+index.html           # SEO/OG meta for lyrics.srkrlolo.in, font preconnects
+vercel.json          # SPA rewrite to index.html
+PRODUCT.md           # product spec (users, principles, constraints)
+DESIGN.md            # design system (midnight console, neon-by-role)
+```
+
+## Design notes (summary)
+
+Backstage dark console: `console #08070B`, `panel #100D16`, `raised #1A1421`. Magenta `#E040FC` = action/focus/selection, cyan `#7FD7FD` = live/connected, red `#FF5964` = destructive. Square corners everywhere, no shadows (scrim for overlays). Every stage state is colour **plus** a word (`LIVE`, `STAGED`, `PLAYED`, `CONNECTED`, `BLACKOUT`). Counts in tabular IBM Plex Mono. See `DESIGN.md` for the full spec.
+
+## Deployment
+
+Push to `master` → Vercel auto-deploys the static build. No server code, no env beyond the two Supabase vars (set in the Vercel dashboard).
