@@ -1,6 +1,10 @@
-# LOLOSYNC
+<img src="public/lolo_logos/Lolo_logo_1.png" alt="LOLO SYNC logo" width="120" />
 
-Live lyrics display for SRKR LOLO.
+# LOLO SYNC
+
+**LOLO SYNC** is the live lyrics display for SRKR LOLO.
+
+One person controls the show from the admin console, and every audience screen follows instantly:
 
 - **Audience screen** (`/`): shows the current song with lyrics.
 - **Admin console** (`/admin`): manage songs, events, and push songs live.
