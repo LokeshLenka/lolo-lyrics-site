@@ -1,6 +1,6 @@
 <h1 align="center">
-  <img src="public/lolo_logos/Lolo_logo_1.png" alt="LOLO SYNC logo" width="48" style="vertical-align: middle" />
-  LOLO SYNC
+  <img src="public/lolo_logos/Lolo_logo_1.png" alt="LOLO SYNC logo" width="48" align="absmiddle" style="vertical-align: middle" />
+  <span style="vertical-align: middle">LOLO SYNC</span>
 </h1>
 
 **LOLO SYNC** is the live lyrics display for SRKR LOLO.
