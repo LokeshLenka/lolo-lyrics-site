@@ -144,7 +144,7 @@ function AudienceView({ song }: { song: Song | null }) {
             </motion.p>
 
             <p className="mt-20 font-mono text-[11px] tracking-[0.22em] text-white/50 uppercase">
-              @ SRKR LOLO
+              @SRKR LOLO
             </p>
           </div>
         </motion.div>
