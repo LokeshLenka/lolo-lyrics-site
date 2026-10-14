@@ -115,15 +115,15 @@ function AudienceView({ song }: { song: Song | null }) {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: reduceMotion ? 0 : 0.7, ease: [0.16, 1, 0.3, 1] }}
+          transition={{
+            duration: reduceMotion ? 0 : 0.7,
+            ease: [0.16, 1, 0.3, 1],
+          }}
           className="audience-live min-h-dvh"
           style={{ backgroundImage: getGradientCss(song.color) }}
         >
           <div className="audience-content min-h-dvh bg-black/35 px-6 py-14 sm:px-10 md:px-16 lg:px-24">
-            <div className="flex items-center gap-3 font-mono text-[10px] tracking-[.2em] text-white/55 uppercase">
-              <span className="size-1.5 rounded-full bg-lamp" aria-hidden="true" />
-              Live lyric signal
-            </div>
+            <div className="flex items-center gap-3 font-mono text-[10px] tracking-[.2em] text-white/55 uppercase"></div>
             <h1 className="mt-8 max-w-[16ch] text-balance text-[clamp(2.5rem,7vw,5.5rem)] leading-[1.02] font-semibold tracking-[-0.03em] text-white">
               {song.title}
             </h1>
@@ -133,7 +133,11 @@ function AudienceView({ song }: { song: Song | null }) {
             <motion.p
               initial={reduceMotion ? false : { opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: reduceMotion ? 0 : 0.7, delay: 0.12, ease: [0.16, 1, 0.3, 1] }}
+              transition={{
+                duration: reduceMotion ? 0 : 0.7,
+                delay: 0.12,
+                ease: [0.16, 1, 0.3, 1],
+              }}
               className="mt-12 max-w-[42ch] text-pretty text-[clamp(1.35rem,3vw,2.6rem)] leading-[1.32] font-medium whitespace-pre-line text-white/95 md:mt-16"
             >
               {song.lyrics.join("\n")}
